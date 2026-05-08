@@ -30,7 +30,7 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
         if (user) {
             const isDomainValid = user.email.endsWith('@itspereira.edu.co');
             if (!isDomainValid) {
-                showLoginError('Acceso denegado. Usa tu cuenta @itspereira.edu.co');
+                showLoginError('Acceso denegado. Usa tu cuenta institucional (@itspereira.edu.co)');
                 await signOut(auth);
                 return;
             }

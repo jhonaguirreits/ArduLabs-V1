@@ -1,15 +1,80 @@
 // ==============================================================
 // 1. IMPORTACIONES (Firebase Cloud SDKs 10.8.1 - CDN Oficial)
+function renderTeoriaEstilizada(data, currentRetoId, userData) {
+  const container = document.getElementById('teoria-container');
+  container.innerHTML = '<h3><i data-lucide="book-open"></i> Teoría del Módulo</h3>';
+  
+  Object.entries(data.teoria).forEach(([nivel, info]) => {
+    const claveReclamada = `teoria_leida_${currentRetoId}_${nivel}`;
+    const yaLeido = userData.teoria?.[claveReclamada] === true;
+    
+    const card = document.createElement('div');
+    card.className = `teoria-card ${nivel}`;
+    card.innerHTML = `
+      <div class="teoria-card-header">
+        <span>${info.titulo}</span>
+        <button class="btn-teoria ${yaLeido ? 'reclamado' : ''}" 
+                id="btn-teoria-${nivel}"
+                data-action="abrirModalTeoria" 
+                data-semana="${currentRetoId}" 
+                data-nivel="${nivel}">
+          ${yaLeido ? '✔️ Leído' : `Leer y Ganar ${info.monedas} 🪙`}
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function abrirModalTeoria(semanaId, nivel) {
+  const info = weeks[semanaId].teoria[nivel];
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = `
+    <div class="modal-box card" style="max-width: 600px;">
+      <div class="modal-header"><h2>${info.titulo}</h2><button data-action="cerrarModal" class="close-btn">X</button></div>
+      <div style="padding: 20px; color: var(--text-light);">
+        <p>${info.contenido}</p>
+        <div class="code-block" style="margin: 15px 0;">${info.ejemplo.replace(/\n/g, '<br>')}</div>
+        <div class="quiz-box" style="background: rgba(47,129,247,0.1); padding: 15px; border-radius: 8px;">
+          <p><strong>Pregunta:</strong> ${info.quiz.pregunta}</p>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            ${info.quiz.opciones.map((opc, idx) => `
+              <button class="btn-verify" style="text-align: left; background: var(--bg-dark);" 
+                      data-action="validarQuiz" data-elegida="${idx}" data-correcta="${info.quiz.correcta}" 
+                      data-monto="${info.monedas}" data-semana="${semanaId}" data-nivel="${nivel}">
+                ${idx + 1}. ${opc}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function validarQuiz(elegida, correcta, semana, nivel, monto) {
+  if (elegida === correcta) {
+    reclamarMonedas(semana, nivel, monto);
+    document.querySelector('.modal-overlay.active').remove();
+    showToast(`¡Correcto! Ganaste ${monto} monedas`, 'success');
+  } else {
+    playErrorSound();
+    showToast("Respuesta incorrecta, lee de nuevo.", "error");
+  }
+}
+
 // ==============================================================
-import { getState, updateState } from './modules/state.js';
+import { getState, updateState } from './state.js';
 import { GoogleGenerativeAI } from "https://cdn.jsdelivr.net/npm/@google/generative-ai@0.1.3/dist/index.min.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js"; // Core Firebase app
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js"; // Analytics
-import { ADMIN_EMAIL, mensajesExito, mensajesFallo, competenciasMapa, weeks, tiendaItems, logrosDefiniciones, GEMINI_API_KEY, COLLECTIVE_CHALLENGE_GOAL, ARDUINO_QUICK_COMMANDS } from './modules/constants.js'; // Existing import
-import { initializeAuth, setupAuthListener, loginWithGoogle, logoutUser } from './modules/auth.js'; // New import for auth module
-import { initializeFirestore, doc, setDoc, getDoc, updateDoc, increment, onSnapshot, addDoc, serverTimestamp, collection, query, where, orderBy, limit } from './modules/firestore.js'; // New import for firestore module
-import { initializeGamificationModule, getVidas, resetChallengeState, decrementVida, incrementFallo, unlockPista, cargarDatosGamificacion, abrirModalGamificacion, cerrarModalGamificacion, cambiarTabGamificacion, comprarArticulo, equiparArticulo, reclamarMonedas, ganarVolts, comprarEnergia, comprarPista, renderPistas, playCoinSound, playErrorSound, getMensajesExito, getMensajesFallo } from './modules/gamification.js'; // New import for gamification module
-import { initializeTeacherModule, iniciarAppDocente as teacherModuleIniciarAppDocente, renderTeacherDashboard, exportarCSV, cambiarTabDocente, renderTeacherManagementUI, addDocente, removeDocente, renderSecondaryTeacherUI, addMyGroup, removeMyGroup } from './modules/teacher.js'; // New import for teacher module
+import { ADMIN_EMAIL, mensajesExito, mensajesFallo, competenciasMapa, weeks, tiendaItems, logrosDefiniciones, GEMINI_API_KEY, COLLECTIVE_CHALLENGE_GOAL, ARDUINO_QUICK_COMMANDS } from './constants.js'; // Existing import
+import { initializeAuth, setupAuthListener, loginWithGoogle, logoutUser } from './auth.js'; // New import for auth module
+import { initializeFirestore, doc, setDoc, getDoc, updateDoc, increment, onSnapshot, addDoc, serverTimestamp, collection, query, where, orderBy, limit } from './firestore.js'; // New import for firestore module
+import { initializeGamificationModule, getVidas, resetChallengeState, decrementVida, incrementFallo, unlockPista, cargarDatosGamificacion, abrirModalGamificacion, cerrarModalGamificacion, cambiarTabGamificacion, comprarArticulo, equiparArticulo, reclamarMonedas, ganarVolts, comprarEnergia, comprarPista, renderPistas, playCoinSound, playErrorSound, getMensajesExito, getMensajesFallo, initAudio } from './gamification.js'; // New import for gamification module
+import { initializeTeacherModule, iniciarAppDocente as teacherModuleIniciarAppDocente, renderTeacherDashboard, exportarCSV, cambiarTabDocente, renderTeacherManagementUI, addDocente, removeDocente, renderSecondaryTeacherUI, addMyGroup, removeMyGroup } from './teacher.js'; // New import for teacher module
 
 // ==============================================================
 // 2. CONFIGURACIÓN EXACTA DE TU FIREBASE (CodeQuestPro)

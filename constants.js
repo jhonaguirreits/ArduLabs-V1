@@ -1,3 +1,5 @@
+export const GEMINI_API_KEY = 'TU_API_KEY_AQUI'; // Reemplaza con tu llave real
+
 export const ADMIN_EMAIL = 'jhon.aguirre@itspereira.edu.co';
 
 export const mensajesExito = ["¡Excelente deducción!", "¡Felicidades!", "¡Muy bien hecho!", "¡Brillante!"];

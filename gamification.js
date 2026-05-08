@@ -51,7 +51,7 @@ export const unlockPista = (nivel) => {
 // ==============================================================
 // Funciones de Audio
 // ==============================================================
-const initAudio = () => {
+export const initAudio = () => {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 };
@@ -422,7 +422,8 @@ export const comprarEnergia = (nivel) => {
 export const comprarPista = (nivel) => {
     const { userData, currentRetoId } = getState();
     const newUserData = { ...userData };
-    const reto = weeks[currentRetoId].retos[nivel];
+    const reto = weeks[currentRetoId]?.retos[nivel];
+    if (!reto) return;
     if (_pistasDesbloqueadas[nivel] >= reto.pistas.length) return;
     if (newUserData.volts >= 5) {
         newUserData.volts -= 5;
