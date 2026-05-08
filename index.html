@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wokwi Academy V7 | CodeQuestPro Cloud</title>
+  
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="screen-login" class="screen active">
+  <div class="login-container" style="text-align: center;">
+    <h1 class="login-title flex-icon" style="justify-content: center;"><i data-lucide="cloud"></i> Wokwi Academy</h1>
+    <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">
+      Acceso exclusivo para estudiantes<br><strong>Solo @itspereira.edu.co</strong>
+    </p>
+    
+    <button id="btn-login-google" class="btn-login" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; border: 2px solid #ddd;">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google">
+      Continuar con Google
+    </button>
+    
+    <div id="login-error" class="error-msg" style="margin-top: 15px;"></div>
+    <div id="login-loading" style="display: none; margin-top: 15px; color: var(--wokwi-blue);"><i data-lucide="loader-2" class="lucide-spin"></i> Conectando con la nube...</div>
+  </div>
+</div>
+
+<div id="screen-teacher" class="screen">
+  <header style="justify-content: space-between;">
+    <div class="header-title flex-icon" style="color: var(--warning-color);">
+      <i data-lucide="shield-alert"></i> Panel del Docente (Admin)
+    </div>
+    <div style="display: flex; gap: 15px;">
+      <button id="btn-exportar-csv" data-action="exportarCSV" class="export-btn flex-icon" style="background-color: var(--accent); color:white; border:none;">
+        <i data-lucide="download"></i> Exportar Notas (.csv)
+      </button>
+      <button id="btn-back-to-student" class="export-btn flex-icon" style="background-color: var(--wokwi-blue); color:white; border:none;">
+        <i data-lucide="layout"></i> Vista Estudiante
+      </button>
+      <button id="btn-logout-teacher" class="export-btn flex-icon btn-logout" style="background-color: var(--error-color); color:white; border:none;">
+        <i data-lucide="log-out"></i> Salir
+      </button>
+    </div>
+  </header>
+
+  <main style="padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; overflow-y: auto;">
+    
+    <div class="modal-tabs" id="teacher-tabs" style="display: none;">
+      <button class="tab-btn active" id="btn-tab-estudiantes" data-action="cambiarTabDocente" data-tab="estudiantes"><i data-lucide="users"></i> Panel de Estudiantes</button>
+      <button class="tab-btn" id="btn-tab-gestion" data-action="cambiarTabDocente" data-tab="gestion-docentes"><i data-lucide="user-cog"></i> Gestionar Docentes</button>
+      <button class="tab-btn" id="btn-tab-matricula" data-action="cambiarTabDocente" data-tab="matricula"><i data-lucide="book-user"></i> Gestión de Matrícula</button>
+      <button class="tab-btn" id="btn-tab-piar" data-action="cambiarTabDocente" data-tab="piar-report"><i data-lucide="accessibility"></i> Reporte PIAR</button>
+      <button class="tab-btn" id="btn-tab-admin-tools" data-action="cambiarTabDocente" data-tab="admin-tools"><i data-lucide="shield"></i> Herramientas de Admin</button>
+    </div>
+
+    <div id="tab-estudiantes" style="display: block;">
+      <div class="card" style="margin-bottom: 20px;">
+        <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Filtros de Grupo</h2>
+        <select id="filtro-grupo" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 1rem; cursor: pointer;">
+          <option value="TODOS">Todos los grupos</option>
+          <option value="10A">Grado 10A</option>
+          <option value="10B">Grado 10B</option>
+          <option value="11A">Grado 11A</option>
+          <option value="11B">Grado 11B</option>
+        </select>
+        
+        <div id="teacher-secondary-controls" class="teacher-secondary-controls">
+          <h3 style="color: var(--wokwi-blue);">Bienvenido, <span id="docente-name"></span></h3>
+          <div class="management-container">
+            <input type="text" id="new-group-name" placeholder="Ej: 10A, 11B...">
+            <button id="btn-add-my-group" data-action="addMyGroup"><i data-lucide="plus"></i> Añadir Grupo</button>
+          </div>
+          <div id="my-groups-list" class="docentes-list"></div>
+        </div>
+      </div>
+
+      <div class="card" style="overflow-x: auto;">
+        <table class="teacher-table">
+          <thead><tr><th>Estudiante</th><th>Grupo</th><th>Progreso Global</th><th>Monedas 🪙</th><th>Nota Calculada</th></tr></thead>
+          <tbody id="teacher-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-gestion-docentes" style="display: none;">
+      <div class="card">
+        <h2><i data-lucide="user-plus"></i> Añadir o Quitar Docentes Secundarios</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Los correos añadidos aquí tendrán acceso al panel de docente para gestionar sus propios grupos.</p>
+        <div class="management-container">
+          <input type="email" id="new-docente-email" placeholder="correo@itspereira.edu.co">
+          <button id="btn-add-docente-admin" data-action="addDocente"><i data-lucide="plus"></i> Añadir Docente</button>
+        </div>
+        <div id="docentes-list" class="docentes-list"></div>
+      </div>
+    </div>
+
+    <div id="tab-matricula" style="display: none;">
+      <!-- Contenido generado dinámicamente en teacher.js -->
+    </div>
+
+    <div id="tab-piar-report" style="display: none;">
+      <div class="card">
+        <h2 class="flex-icon">
+          <span><i data-lucide="accessibility"></i> Monitoreo de Estudiantes PIAR</span>
+          <button id="btn-export-piar" data-action="exportPiarPDF" class="export-btn" style="background: var(--accent); color: white; font-size: 0.8rem;"><i data-lucide="file-down"></i> Descargar PDF</button>
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 15px;">Listado de estudiantes con ajustes razonables y sus fortalezas detectadas.</p>
+        <div id="piar-report-container" class="docentes-list">
+          <!-- Se llena dinámicamente -->
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-admin-tools" style="display: none;">
+      <div class="card" style="margin-bottom: 20px;">
+        <h2><i data-lucide="settings"></i> Configuración del Reto Colectivo</h2>
+        <div class="management-container">
+            <p>Progreso actual: <strong id="admin-collective-prog"></strong> / 500 retos superados.</p>
+            <button data-action="resetCollectiveGoal" style="background: var(--error-color);"><i data-lucide="refresh-ccw"></i> Reiniciar Meta Institucional</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2><i data-lucide="activity"></i> Registro de Actividad Global</h2>
+        <div id="admin-activity-log" style="max-height: 400px; overflow-y: auto; font-size: 0.9rem; padding: 10px; background: var(--code-bg); border-radius: 8px; border: 1px solid var(--border-color);"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="screen-app" class="screen">
+<header>
+  <div class="header-top">
+    <div class="header-title flex-icon">
+      <i data-lucide="terminal"></i> Wokwi Academy
+      
+      <div id="stats-panel" class="stats-panel" style="display:none;">
+        <div class="stat-badge streak-badge flex-icon" title="Racha de estudio continuo">
+          <i data-lucide="flame"></i> <span id="streak-count">0</span>
+        </div>
+        <div class="stat-badge volts-badge flex-icon" title="Volts Acumulados (Usa para pistas)">
+          <i data-lucide="zap"></i> <span id="volts-count">0</span>
+        </div>
+        <div class="monedas-display" title="Monedas (Usa para comprar en la Tienda)">
+          🪙 <span id="user-monedas">0</span>
+        </div>
+      </div>
+    </div>
+
+    <select class="week-selector" id="lang-select" style="background: var(--bg-dark); border-color: var(--border-color);">
+       <option value="es">🇪🇸 Español</option>
+       <option value="en">🇺🇸 English</option>
+    </select>
+
+    <div style="display: flex; gap: 8px;">
+      <select class="week-selector" id="period-select" style="background: var(--accent); border-color: var(--accent);">
+         <option value="1">Periodo 1</option>
+         <option value="2">Periodo 2</option>
+         <option value="3">Periodo 3</option>
+         <option value="4">Periodo 4</option>
+      </select>
+
+      <select class="week-selector" id="week-select">
+         <!-- Se llena dinámicamente -->
+      </select>
+    </div>
+    
+    <div style="display:flex;gap:8px;" id="header-buttons">
+      <button class="export-btn flex-icon" id="btn-theme"><i data-lucide="sun"></i> Tema</button>
+      <button class="export-btn flex-icon" id="btn-gamificacion" style="background: #e3b341; color: black;"><i data-lucide="shopping-cart"></i> Tienda & Ranking</button>
+      <button class="export-btn flex-icon" id="btn-portafolio" style="background: #1f6feb; color: white;"><i data-lucide="printer"></i> PDF</button>
+      <button class="export-btn flex-icon" id="btn-diploma" style="background: var(--accent); color: white;"><i data-lucide="award"></i> Diploma</button>
+    </div>
+  </div>
+  <div class="progreso-global">
+    <span class="progreso-label">Sincronización Nube <span style="color:#238636">🟢</span> | Progreso:</span>
+    <div class="progreso-barra-wrap"><div class="progreso-fill" id="progreso-fill"></div></div>
+    <span class="progreso-texto" id="progreso-texto">0 / 30 retos</span>
+    <div class="progreso-semanas" id="progreso-semanas"></div>
+    
+    <div class="collective-challenge-container">
+      <span class="progreso-label" style="color: #e3b341;"><i data-lucide="users"></i> Meta Institucional:</span>
+      <div class="progreso-barra-wrap" style="max-width: 200px; height: 6px; background: rgba(227, 179, 65, 0.1);">
+        <div class="progreso-fill" id="collective-fill" style="background: #e3b341; box-shadow: 0 0 8px rgba(227, 179, 65, 0.4);"></div>
+      </div>
+      <span class="progreso-texto" id="collective-text" style="color: #e3b341; font-size: 0.75rem;">Cargando meta...</span>
+    </div>
+  </div>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    
+    <div class="card">
+      <h2 id="w-title" class="flex-icon"><i data-lucide="book-open"></i> Misión</h2>
+      <h3 class="flex-icon" style="color: var(--wokwi-blue);"><i data-lucide="brain-circuit"></i> Aprendizaje del Módulo</h3>
+      <div id="w-competencia" class="instruction-box" style="background: rgba(47,129,247,0.08); border-left-color: var(--wokwi-blue); margin-bottom: 20px;"></div>
+      
+      <div id="teoria-container"></div>
+      
+      <h3 class="flex-icon"><i data-lucide="target"></i> El Reto</h3>
+      <div id="w-challenge" class="instruction-box"></div>
+      <h3 class="flex-icon"><i data-lucide="cpu"></i> Componentes</h3>
+      <div id="w-components" class="tags-container"></div>
+      <h3 class="flex-icon"><i data-lucide="plug-2"></i> Conexiones</h3>
+      <ul id="w-wiring"></ul>
+    </div>
+
+    <div class="card">
+      <h2 class="flex-icon"><i data-lucide="code-2"></i> Código Base</h2>
+      <div class="code-container">
+        <button class="btn-copy flex-icon" id="btnCopy"><i data-lucide="copy"></i> Copiar</button>
+        <button class="btn-copy flex-icon" id="btnExportIno" style="right: 110px; background: var(--accent); border-color: var(--accent); color: white;"><i data-lucide="download"></i> .ino</button>
+        <div class="code-block" id="w-code"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="flex-icon"><i data-lucide="book-open-check"></i> Paso a Paso</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">Analiza qué hace cada bloque de código.</p>
+      <div id="w-explicacion" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <div class="flex-icon"><i data-lucide="trending-up"></i> Ruta de Mejora</div>
+        <div style="display:flex; gap:8px;">
+          <button id="btn-reset-week" class="btn-reset flex-icon" style="background: rgba(229, 62, 62, 0.1); color: #e53e3e;"><i data-lucide="refresh-cw"></i> Reiniciar Semana</button>
+          <button id="btn-reset-code" class="btn-reset flex-icon"><i data-lucide="rotate-ccw"></i> Limpiar Borradores</button>
+        </div>
+      </h2>
+      
+      <div id="r-container-basico" class="reto-container">
+        <div class="reto-box reto-basico">
+          <div class="reto-titulo" style="color:var(--nivel-basico)"><i data-lucide="circle-dot"></i> Nivel Básico <span style="color:var(--text-muted); font-size:0.75rem;">(Premio: 10 ⚡)</span></div>
+          <div id="r-desc-basico"></div>
+        </div>
+        <div id="eval-basico" class="evaluator-box">
+          <div class="eval-header">
+            <div class="eval-header-left"><span>Analizador</span><span id="vidas-basico" class="vidas-display">❤️❤️❤️</span></div>
+            <div class="eval-header-right"><span id="record-basico" class="record-display" style="display:none"></span><span id="timer-basico" class="timer-display">⏱ 00:00</span></div>
+          </div>
+          <div class="input-wrap" id="editor-basico-container">
+            <div id="bloques-basico" class="tags-container" style="margin-bottom:10px; display:none;"></div>
+            <textarea id="input-basico" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea>
+            <div class="syntax-bar" id="syntax-basico"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
+            <div id="kbd-basico" class="virtual-keyboard"></div>
+          </div>
+          <div id="pista-basico" class="pista-box"></div>
+          <div id="btn-container-basico" style="display:flex; gap:10px; margin-top:12px;">
+             <button data-action="verifyCode" data-nivel="basico" id="btn-basico" class="btn-verify flex-icon" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
+             <button data-action="llevarAlSimulador" data-nivel="basico" class="btn-verify flex-icon" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+          </div>
+          <div id="feedback-basico" class="feedback"></div>
+        </div>
+        <div id="done-basico" class="completed-badge" style="display:none;"><i data-lucide="check-circle-2"></i> Nivel Completado (Guardado ☁️)<span id="record-done-basico" class="record-badge" style="display:none;"></span></div>
+      </div>
+
+      <div id="r-container-alto" class="reto-container" style="display:none;">
+        <div class="reto-box reto-alto">
+          <div class="reto-titulo" style="color:var(--nivel-alto)"><i data-lucide="triangle"></i> Nivel Alto <span style="color:var(--text-muted); font-size:0.75rem;">(Premio: 20 ⚡)</span></div>
+          <div id="r-desc-alto"></div>
+        </div>
+        <div id="eval-alto" class="evaluator-box">
+          <div class="eval-header">
+            <div class="eval-header-left"><span>Analizador</span><span id="vidas-alto" class="vidas-display">❤️❤️❤️</span></div>
+            <div class="eval-header-right"><span id="record-alto" class="record-display" style="display:none"></span><span id="timer-alto" class="timer-display">⏱ 00:00</span></div>
+          </div>
+          <div class="input-wrap" id="editor-alto-container">
+            <div id="bloques-alto" class="tags-container" style="margin-bottom:10px; display:none;"></div>
+            <textarea id="input-alto" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea>
+            <div class="syntax-bar" id="syntax-alto"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
+            <div id="kbd-alto" class="virtual-keyboard"></div>
+          </div>
+          <div id="pista-alto" class="pista-box"></div>
+          <div id="btn-container-alto" style="display:flex; gap:10px; margin-top:12px;">
+             <button id="btn-alto" class="btn-verify flex-icon" onclick="window.verifyCode('alto')" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
+             <button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('alto')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+          </div>
+          <div id="feedback-alto" class="feedback"></div>
+        </div>
+        <div id="done-alto" class="completed-badge" style="display:none;"><i data-lucide="check-circle-2"></i> Nivel Completado (Guardado ☁️)<span id="record-done-alto" class="record-badge" style="display:none;"></span></div>
+      </div>
+
+      <div id="r-container-superior" class="reto-container" style="display:none;">
+        <div class="reto-box reto-superior">
+          <div class="reto-titulo" style="color:var(--nivel-superior)"><i data-lucide="hexagon"></i> Nivel Superior (Boss) <span style="color:var(--text-muted); font-size:0.75rem;">(Premio: 30 ⚡)</span></div>
+          <div id="r-desc-superior"></div>
+        </div>
+        <div id="eval-superior" class="evaluator-box">
+          <div class="eval-header">
+            <div class="eval-header-left"><span>Analizador</span><span id="vidas-superior" class="vidas-display">❤️❤️❤️</span></div>
+            <div class="eval-header-right"><span id="record-superior" class="record-display" style="display:none"></span><span id="timer-superior" class="timer-display">⏱ 00:00</span></div>
+          </div>
+          <div class="input-wrap" id="editor-superior-container">
+            <div id="bloques-superior" class="tags-container" style="margin-bottom:10px; display:none;"></div>
+            <textarea id="input-superior" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea>
+            <div class="syntax-bar" id="syntax-superior"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
+            <div id="kbd-superior" class="virtual-keyboard"></div>
+          </div>
+          <div id="pista-superior" class="pista-box"></div>
+          <div id="btn-container-superior" style="display:flex; gap:10px; margin-top:12px;">
+             <button id="btn-superior" class="btn-verify flex-icon" onclick="window.verifyCode('superior')" style="flex:1; background:var(--nivel-superior);"><i data-lucide="swords"></i> Enfrentar Boss</button>
+             <button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('superior')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+          </div>
+          <div id="feedback-superior" class="feedback"></div>
+        </div>
+        <div id="done-superior" class="completed-badge" style="display:none;"><i data-lucide="trophy"></i> ¡BOSS DERROTADO! (Guardado ☁️)<span id="record-done-superior" class="record-badge" style="display:none;"></span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="wokwi-container">
+    <iframe id="wokwi-iframe" src="https://wokwi.com/projects/new/arduino-uno" title="Simulador Wokwi" loading="lazy" allow="fullscreen"></iframe>
+  </div>
+</div>
+
+<div id="modal-gamificacion" class="modal-overlay" style="display:none;">
+  <div class="modal-box card">
+    <div class="modal-header">
+      <h2 style="margin: 0; border: none; padding: 0;" class="flex-icon"><i data-lucide="gamepad-2"></i> Zona Multijugador</h2>
+      <button class="close-btn flex-icon" onclick="window.cerrarModalGamificacion()"><i data-lucide="x"></i></button>
+    </div>
+    
+    <div class="modal-tabs">
+      <button class="tab-btn active" id="btn-tab-ranking" data-action="cambiarTabGamificacion" data-tab="ranking"><i data-lucide="trophy"></i> Ranking Global</button>
+      <button class="tab-btn" id="btn-tab-tienda" data-action="cambiarTabGamificacion" data-tab="tienda"><i data-lucide="shopping-bag"></i> Tienda de Perfil</button>
+      <button class="tab-btn" id="btn-tab-logros"><i data-lucide="award"></i> Mis Logros</button>
+      <button class="tab-btn" id="btn-tab-stats"><i data-lucide="bar-chart-2"></i> Estadísticas</button>
+    </div>
+
+    <div id="tab-ranking" class="tab-content" style="display:block;">
+      <h3 style="color: var(--wokwi-blue); margin-bottom: 15px; text-align: center;">🏆 Top 5 Estudiantes (Monedas 🪙)</h3>
+      <table class="ranking-table">
+        <thead><tr><th>Posición</th><th>Estudiante</th><th>Grado</th><th>Monedas</th><th>Racha</th></tr></thead>
+        <tbody id="ranking-tbody">
+          <tr><td colspan="5" style="text-align:center;"><i data-lucide="loader-2" class="lucide-spin"></i> Cargando de la Nube...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="tab-tienda" class="tab-content" style="display:none;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h3 style="color: #e3b341;">Tienes 🪙 <span id="tienda-user-monedas">0</span> Monedas</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Personaliza tu experiencia. Los cambios se guardarán en tu cuenta.</p>
+      </div>
+
+      <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px;">👾 Avatares de Perfil</h4>
+      <div class="store-grid" id="store-avatars"></div>
+
+      <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; margin-top: 25px;">🎨 Temas de la Plataforma</h4>
+      <div class="store-grid" id="store-themes"></div>
+    </div>
+
+    <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; margin-top: 25px;">⚡ Power-Ups</h4>
+    <div class="store-grid" id="store-powerups"></div>
+    
+    <div id="tab-stats" class="tab-content" style="display:none;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h3 style="color: var(--wokwi-blue);">📊 Tu Perfil de Ingeniería</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Visualiza tus fortalezas en electrónica, código y lógica.</p>
+      </div>
+      <div style="max-width: 350px; margin: 0 auto;"><canvas id="skillsChart"></canvas></div>
+      <div id="skills-feedback" style="margin-top: 20px; padding: 15px; background: rgba(128,128,128,0.1); border-radius: 12px; text-align: center; font-size: 0.9rem;"></div>
+    </div>
+
+    <div id="tab-logros" class="tab-content" style="display:none;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h3 style="color: var(--accent);">🏅 Galería de Trofeos</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Demuestra tus habilidades completando desafíos especiales.</p>
+      </div>
+      <div class="achievements-grid" id="logros-container"></div>
+    </div>
+    
+  </div>
+</div>
+
+<div id="diploma-wrapper" style="position: absolute; top: -9999px; left: -9999px; width: 1122px; height: 793px; background: white; padding: 40px; font-family: 'Inter', Arial, sans-serif; z-index: -1;">
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; pointer-events: none; z-index: 0;">
+    <svg width="600" height="600" viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+  </div>
+  <div style="border: 12px solid #0d1117; height: 100%; padding: 25px; text-align: center; position: relative; background: rgba(248, 251, 255, 0.95); box-sizing: border-box; border-radius: 12px; z-index: 1;">
+    <div style="border: 3px solid #2f81f7; height: 100%; padding: 20px 40px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px;">
+          <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#2f81f7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          <div style="text-align: left;">
+            <h2 style="font-size: 1.6rem; color: #0d1117; margin: 0; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Instituto Técnico Superior</h2>
+            <h3 style="font-size: 1.1rem; color: #484f58; margin: 0; font-weight: 600;">Wokwi Academy - Nivel Arduino</h3>
+          </div>
+        </div>
+        <h1 style="font-size: 2.8rem; color: #0d1117; margin: 5px 0; font-weight: 800; letter-spacing: 2px;">CERTIFICADO DE EXCELENCIA</h1>
+        <p style="font-size: 1.2rem; color: #484f58; margin: 5px 0;">Se otorga el presente reconocimiento a:</p>
+        <h3 id="dip-nombre" style="font-size: 2.6rem; color: #0d1117; margin: 10px 0; text-transform: capitalize; border-bottom: 2px solid #d0d7de; display: inline-block; padding: 0 40px;">Nombre del Estudiante</h3>
+        <p style="font-size: 1.1rem; color: #484f58; margin: 10px 0;">Estudiante del grado <strong id="dip-grado" style="color: #2f81f7;">10A</strong>, por su progreso del <strong id="dip-progreso" style="color: #238636;">100%</strong> y calificación de <strong id="dip-nota" style="color: #238636;">5.0 / 5.0</strong>.</p>
+        <div style="margin: 15px 0;"><span id="dip-estado" style="background: #238636; color: white; padding: 6px 18px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px;">ESTADO: GRADUADO</span></div>
+      </div>
+      <div style="text-align: left; padding: 0 20px; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+        <h4 style="color: #0d1117; border-bottom: 2px solid #2f81f7; padding-bottom: 5px; font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase;">Competencias Técnicas Adquiridas:</h4>
+        <ul id="dip-competencias" style="color: #24292f; font-size: 0.95rem; column-count: 2; column-gap: 40px; line-height: 1.7; list-style: none; padding: 0; margin: 0; font-weight: 500;"></ul>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 0 50px; margin-top: 20px;">
+        <div style="text-align: center; border-top: 2px solid #0d1117; padding-top: 10px; width: 320px;">
+          <div style="font-weight: bold; color: #0d1117; font-size: 1.15rem;">Jhon Jairo Aguirre</div>
+          <div style="color: #484f58; font-size: 0.9rem;">Doctor en Ciencias de la Educación</div>
+          <div style="color: #484f58; font-size: 0.9rem; font-weight: bold;">Docente Titular</div>
+        </div>
+        <div style="text-align: center; border-top: 2px solid #0d1117; padding-top: 10px; width: 250px;">
+          <div style="font-weight: bold; color: #0d1117; font-size: 1.15rem;" id="dip-fecha">Fecha</div>
+          <div style="color: #484f58; font-size: 0.9rem;">Fecha de Expedición</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
