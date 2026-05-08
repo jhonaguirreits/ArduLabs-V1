@@ -3,17 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ArduLabs | diseñado por docente Jhon Jairo Aguirre</title>
+  <title>Wokwi Academy V7 | CodeQuestPro Cloud</title>
   
-  <!-- CodeMirror -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -21,15 +16,12 @@
 
 <div id="screen-login" class="screen active">
   <div class="login-container" style="text-align: center;">
-    <h1 class="login-title flex-icon" style="justify-content: center;"><i data-lucide="cloud"></i> ArduLabs</h1>
-    <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.95rem;">
+    <h1 class="login-title flex-icon" style="justify-content: center;"><i data-lucide="cloud"></i> Wokwi Academy</h1>
+    <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">
       Acceso exclusivo para estudiantes<br><strong>Solo @itspereira.edu.co</strong>
     </p>
-    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 25px;">
-      Diseñado por docente Jhon Jairo Aguirre<br>Derechos Reservados
-    </p>
     
-    <button id="btn-login-google" class="btn-login" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; border: 2px solid #ddd;">
+    <button onclick="window.loginConGoogle()" class="btn-login" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; border: 2px solid #ddd;">
       <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google">
       Continuar con Google
     </button>
@@ -45,13 +37,10 @@
       <i data-lucide="shield-alert"></i> Panel del Docente (Admin)
     </div>
     <div style="display: flex; gap: 15px;">
-      <button id="btn-exportar-csv" data-action="exportarCSV" class="export-btn flex-icon" style="background-color: var(--accent); color:white; border:none;">
+      <button onclick="window.exportarCSV()" class="export-btn flex-icon" style="background-color: var(--accent); color:white; border:none;">
         <i data-lucide="download"></i> Exportar Notas (.csv)
       </button>
-      <button id="btn-back-to-student" class="export-btn flex-icon" style="background-color: var(--wokwi-blue); color:white; border:none;">
-        <i data-lucide="layout"></i> Vista Estudiante
-      </button>
-      <button id="btn-logout-teacher" class="export-btn flex-icon btn-logout" style="background-color: var(--error-color); color:white; border:none;">
+      <button onclick="window.logout()" class="export-btn flex-icon" style="background-color: var(--error-color); color:white; border:none;">
         <i data-lucide="log-out"></i> Salir
       </button>
     </div>
@@ -60,36 +49,26 @@
   <main style="padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; overflow-y: auto;">
     
     <div class="modal-tabs" id="teacher-tabs" style="display: none;">
-      <button class="tab-btn active" id="btn-tab-estudiantes" data-action="cambiarTabDocente" data-tab="estudiantes"><i data-lucide="users"></i> Panel de Estudiantes</button>
-      <button class="tab-btn" id="btn-tab-gestion" data-action="cambiarTabDocente" data-tab="gestion-docentes"><i data-lucide="user-cog"></i> Gestionar Docentes</button>
-      <button class="tab-btn" id="btn-tab-matricula" data-action="cambiarTabDocente" data-tab="matricula"><i data-lucide="book-user"></i> Gestión de Matrícula</button>
-      <button class="tab-btn" id="btn-tab-curriculo" data-action="cambiarTabDocente" data-tab="curriculo"><i data-lucide="calendar-range"></i> Configuración de Semanas</button>
-      <button class="tab-btn" id="btn-tab-piar" data-action="cambiarTabDocente" data-tab="piar-report"><i data-lucide="accessibility"></i> Reporte PIAR</button>
-      <button class="tab-btn" id="btn-tab-admin-tools" data-action="cambiarTabDocente" data-tab="admin-tools"><i data-lucide="shield"></i> Herramientas de Admin</button>
+      <button class="tab-btn active" id="btn-tab-estudiantes" onclick="window.cambiarTabDocente('estudiantes')"><i data-lucide="users"></i> Panel de Estudiantes</button>
+      <button class="tab-btn" id="btn-tab-gestion" onclick="window.cambiarTabDocente('gestion-docentes')"><i data-lucide="user-cog"></i> Gestionar Docentes</button>
     </div>
 
     <div id="tab-estudiantes" style="display: block;">
       <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Búsqueda y Filtros</h2>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <select id="filtro-grupo" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 0.9rem; cursor: pointer; flex: 1;">
-            <option value="TODOS">Todos los Grados</option>
-          </select>
-          <select id="filtro-asignatura" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 0.9rem; cursor: pointer; flex: 1;">
-            <option value="TODOS">Todas las Asignaturas</option>
-          </select>
-          <select id="filtro-anio" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 0.9rem; cursor: pointer; width: 120px;">
-            <option value="TODOS">Todos los Años</option>
-          </select>
-        </div>
+        <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Filtros de Grupo</h2>
+        <select id="filtro-grupo" onchange="window.renderTeacherDashboard()" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 1rem; cursor: pointer;">
+          <option value="TODOS">Todos los grupos</option>
+          <option value="10A">Grado 10A</option>
+          <option value="10B">Grado 10B</option>
+          <option value="11A">Grado 11A</option>
+          <option value="11B">Grado 11B</option>
+        </select>
         
         <div id="teacher-secondary-controls" class="teacher-secondary-controls">
           <h3 style="color: var(--wokwi-blue);">Bienvenido, <span id="docente-name"></span></h3>
-          <div class="management-container" style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <input type="text" id="new-group-name" placeholder="Grado (10A)" style="flex: 1;">
-            <input type="text" id="new-group-subject" placeholder="Asignatura (Robótica)" style="flex: 1;">
-            <input type="number" id="new-group-year" placeholder="Año (2024)" style="width: 100px;">
-            <button id="btn-add-my-group" data-action="addMyGroup" style="white-space: nowrap;"><i data-lucide="plus"></i> Crear Clase</button>
+          <div class="management-container">
+            <input type="text" id="new-group-name" placeholder="Ej: 10A, 11B...">
+            <button onclick="window.addMyGroup()"><i data-lucide="plus"></i> Añadir Grupo</button>
           </div>
           <div id="my-groups-list" class="docentes-list"></div>
         </div>
@@ -109,44 +88,9 @@
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Los correos añadidos aquí tendrán acceso al panel de docente para gestionar sus propios grupos.</p>
         <div class="management-container">
           <input type="email" id="new-docente-email" placeholder="correo@itspereira.edu.co">
-          <button id="btn-add-docente-admin" data-action="addDocente"><i data-lucide="plus"></i> Añadir Docente</button>
+          <button onclick="window.addDocente()"><i data-lucide="plus"></i> Añadir Docente</button>
         </div>
         <div id="docentes-list" class="docentes-list"></div>
-      </div>
-    </div>
-
-    <div id="tab-matricula" style="display: none;">
-      <!-- Contenido generado dinámicamente en teacher.js -->
-    </div>
-
-    <div id="tab-curriculo" style="display: none;">
-      <!-- Contenido generado dinámicamente en teacher.js -->
-    </div>
-
-    <div id="tab-piar-report" style="display: none;">
-      <div class="card">
-        <h2 class="flex-icon">
-          <span><i data-lucide="accessibility"></i> Monitoreo de Estudiantes PIAR</span>
-          <button id="btn-export-piar" data-action="exportPiarPDF" class="export-btn" style="background: var(--accent); color: white; font-size: 0.8rem;"><i data-lucide="file-down"></i> Descargar PDF</button>
-        </h2>
-        <p style="color: var(--text-muted); margin-bottom: 15px;">Listado de estudiantes con ajustes razonables y sus fortalezas detectadas.</p>
-        <div id="piar-report-container" class="docentes-list">
-          <!-- Se llena dinámicamente -->
-        </div>
-      </div>
-    </div>
-
-    <div id="tab-admin-tools" style="display: none;">
-      <div class="card" style="margin-bottom: 20px;">
-        <h2><i data-lucide="settings"></i> Configuración del Reto Colectivo</h2>
-        <div class="management-container">
-            <p>Progreso actual: <strong id="admin-collective-prog"></strong> / 500 retos superados.</p>
-            <button data-action="resetCollectiveGoal" style="background: var(--error-color);"><i data-lucide="refresh-ccw"></i> Reiniciar Meta Institucional</button>
-        </div>
-      </div>
-      <div class="card">
-        <h2><i data-lucide="activity"></i> Registro de Actividad Global</h2>
-        <div id="admin-activity-log" style="max-height: 400px; overflow-y: auto; font-size: 0.9rem; padding: 10px; background: var(--code-bg); border-radius: 8px; border: 1px solid var(--border-color);"></div>
       </div>
     </div>
   </main>
@@ -156,7 +100,7 @@
 <header>
   <div class="header-top">
     <div class="header-title flex-icon">
-      <i data-lucide="terminal"></i> ArduLabs
+      <i data-lucide="terminal"></i> Wokwi Academy
       
       <div id="stats-panel" class="stats-panel" style="display:none;">
         <div class="stat-badge streak-badge flex-icon" title="Racha de estudio continuo">
@@ -171,29 +115,24 @@
       </div>
     </div>
 
-    <select class="week-selector" id="lang-select" style="background: var(--bg-dark); border-color: var(--border-color);">
-       <option value="es">🇪🇸 Español</option>
-       <option value="en">🇺🇸 English</option>
+    <select class="week-selector" id="week-select" onchange="window.loadWeek()">
+       <option value="1">Semana 1: Primer Contacto (LED)</option>
+       <option value="2">Semana 2: Semáforo Inteligente</option>
+       <option value="3">Semana 3: Botón de Pánico</option>
+       <option value="4">Semana 4: Dimmer Analógico (PWM)</option>
+       <option value="5">Semana 5: Sintetizador (Buzzer)</option>
+       <option value="6">Semana 6: Radar Automotriz</option>
+       <option value="7">Semana 7: Barrera de Peaje (Servo)</option>
+       <option value="8">Semana 8: Estación Climática</option>
+       <option value="9">Semana 9: Panel Publicitario</option>
+       <option value="10">Semana 10: BOSS FINAL</option>
     </select>
-
-    <div style="display: flex; gap: 8px;">
-      <select class="week-selector" id="period-select" style="background: var(--accent); border-color: var(--accent);">
-         <option value="1">Periodo 1</option>
-         <option value="2">Periodo 2</option>
-         <option value="3">Periodo 3</option>
-         <option value="4">Periodo 4</option>
-      </select>
-
-      <select class="week-selector" id="week-select">
-         <!-- Se llena dinámicamente -->
-      </select>
-    </div>
     
     <div style="display:flex;gap:8px;" id="header-buttons">
-      <button class="export-btn flex-icon" id="btn-theme"><i data-lucide="sun"></i> Tema</button>
-      <button class="export-btn flex-icon" id="btn-gamificacion" style="background: #e3b341; color: black;"><i data-lucide="shopping-cart"></i> Tienda & Ranking</button>
-      <button class="export-btn flex-icon" id="btn-portafolio" style="background: #1f6feb; color: white;"><i data-lucide="printer"></i> PDF</button>
-      <button class="export-btn flex-icon" id="btn-diploma" style="background: var(--accent); color: white;"><i data-lucide="award"></i> Diploma</button>
+      <button class="export-btn flex-icon" onclick="window.toggleTheme()" id="btn-theme"><i data-lucide="sun"></i> Tema</button>
+      <button class="export-btn flex-icon" onclick="window.abrirModalGamificacion()" style="background: #e3b341; color: black;"><i data-lucide="shopping-cart"></i> Tienda & Ranking</button>
+      <button class="export-btn flex-icon" onclick="window.imprimirPortafolio()" style="background: #1f6feb; color: white;"><i data-lucide="printer"></i> PDF</button>
+      <button class="export-btn flex-icon" id="btn-diploma" onclick="window.descargarDiploma()" style="background: var(--accent); color: white;"><i data-lucide="award"></i> Diploma</button>
     </div>
   </div>
   <div class="progreso-global">
@@ -201,14 +140,6 @@
     <div class="progreso-barra-wrap"><div class="progreso-fill" id="progreso-fill"></div></div>
     <span class="progreso-texto" id="progreso-texto">0 / 30 retos</span>
     <div class="progreso-semanas" id="progreso-semanas"></div>
-    
-    <div class="collective-challenge-container">
-      <span class="progreso-label" style="color: #e3b341;"><i data-lucide="users"></i> Meta Institucional:</span>
-      <div class="progreso-barra-wrap" style="max-width: 200px; height: 6px; background: rgba(227, 179, 65, 0.1);">
-        <div class="progreso-fill" id="collective-fill" style="background: #e3b341; box-shadow: 0 0 8px rgba(227, 179, 65, 0.4);"></div>
-      </div>
-      <span class="progreso-texto" id="collective-text" style="color: #e3b341; font-size: 0.75rem;">Cargando meta...</span>
-    </div>
   </div>
 </header>
 
@@ -233,8 +164,7 @@
     <div class="card">
       <h2 class="flex-icon"><i data-lucide="code-2"></i> Código Base</h2>
       <div class="code-container">
-        <button class="btn-copy flex-icon" id="btnCopy"><i data-lucide="copy"></i> Copiar</button>
-        <button class="btn-copy flex-icon" id="btnExportIno" style="right: 110px; background: var(--accent); border-color: var(--accent); color: white;"><i data-lucide="download"></i> .ino</button>
+        <button class="btn-copy flex-icon" onclick="window.copyCode()" id="btnCopy"><i data-lucide="copy"></i> Copiar</button>
         <div class="code-block" id="w-code"></div>
       </div>
     </div>
@@ -248,10 +178,7 @@
     <div class="card">
       <h2>
         <div class="flex-icon"><i data-lucide="trending-up"></i> Ruta de Mejora</div>
-        <div style="display:flex; gap:8px;">
-          <button id="btn-reset-week" class="btn-reset flex-icon" style="background: rgba(229, 62, 62, 0.1); color: #e53e3e;"><i data-lucide="refresh-cw"></i> Reiniciar Semana</button>
-          <button id="btn-reset-code" class="btn-reset flex-icon"><i data-lucide="rotate-ccw"></i> Limpiar Borradores</button>
-        </div>
+        <button class="btn-reset flex-icon" onclick="window.resetProgress()"><i data-lucide="rotate-ccw"></i> Reiniciar Borradores</button>
       </h2>
       
       <div id="r-container-basico" class="reto-container">
@@ -264,16 +191,14 @@
             <div class="eval-header-left"><span>Analizador</span><span id="vidas-basico" class="vidas-display">❤️❤️❤️</span></div>
             <div class="eval-header-right"><span id="record-basico" class="record-display" style="display:none"></span><span id="timer-basico" class="timer-display">⏱ 00:00</span></div>
           </div>
-          <div class="input-wrap" id="editor-basico-container">
-            <div id="bloques-basico" class="tags-container" style="margin-bottom:10px; display:none;"></div> 
-            <textarea id="input-basico" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea> 
+          <div class="input-wrap">
+            <textarea id="input-basico" class="code-input" placeholder="Pega tu código modificado aquí..." oninput="window.validarSintaxis('basico'); window.iniciarTimerSiNecesario('basico')"></textarea>
             <div class="syntax-bar" id="syntax-basico"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
-            <div id="kbd-basico" class="virtual-keyboard"></div>
           </div>
           <div id="pista-basico" class="pista-box"></div>
           <div id="btn-container-basico" style="display:flex; gap:10px; margin-top:12px;">
-             <button data-action="verifyCode" data-nivel="basico" id="btn-basico" class="btn-verify flex-icon" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
-             <button data-action="llevarAlSimulador" data-nivel="basico" class="btn-verify flex-icon" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+             <button id="btn-basico" class="btn-verify flex-icon" onclick="window.verifyCode('basico')" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
+             <button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('basico')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
           </div>
           <div id="feedback-basico" class="feedback"></div>
         </div>
@@ -290,16 +215,14 @@
             <div class="eval-header-left"><span>Analizador</span><span id="vidas-alto" class="vidas-display">❤️❤️❤️</span></div>
             <div class="eval-header-right"><span id="record-alto" class="record-display" style="display:none"></span><span id="timer-alto" class="timer-display">⏱ 00:00</span></div>
           </div>
-          <div class="input-wrap" id="editor-alto-container">
-            <div id="bloques-alto" class="tags-container" style="margin-bottom:10px; display:none;"></div> 
-            <textarea id="input-alto" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea> 
+          <div class="input-wrap">
+            <textarea id="input-alto" class="code-input" placeholder="Pega tu código modificado aquí..." oninput="window.validarSintaxis('alto'); window.iniciarTimerSiNecesario('alto')"></textarea>
             <div class="syntax-bar" id="syntax-alto"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
-            <div id="kbd-alto" class="virtual-keyboard"></div>
           </div>
           <div id="pista-alto" class="pista-box"></div>
           <div id="btn-container-alto" style="display:flex; gap:10px; margin-top:12px;">
-             <button data-action="verifyCode" data-nivel="alto" id="btn-alto" class="btn-verify flex-icon" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
-             <button data-action="llevarAlSimulador" data-nivel="alto" class="btn-verify flex-icon" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+             <button id="btn-alto" class="btn-verify flex-icon" onclick="window.verifyCode('alto')" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
+             <button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('alto')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
           </div>
           <div id="feedback-alto" class="feedback"></div>
         </div>
@@ -316,16 +239,14 @@
             <div class="eval-header-left"><span>Analizador</span><span id="vidas-superior" class="vidas-display">❤️❤️❤️</span></div>
             <div class="eval-header-right"><span id="record-superior" class="record-display" style="display:none"></span><span id="timer-superior" class="timer-display">⏱ 00:00</span></div>
           </div>
-          <div class="input-wrap" id="editor-superior-container">
-            <div id="bloques-superior" class="tags-container" style="margin-bottom:10px; display:none;"></div> 
-            <textarea id="input-superior" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea> 
+          <div class="input-wrap">
+            <textarea id="input-superior" class="code-input" placeholder="Pega tu código modificado aquí..." oninput="window.validarSintaxis('superior'); window.iniciarTimerSiNecesario('superior')"></textarea>
             <div class="syntax-bar" id="syntax-superior"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
-            <div id="kbd-superior" class="virtual-keyboard"></div>
           </div>
           <div id="pista-superior" class="pista-box"></div>
           <div id="btn-container-superior" style="display:flex; gap:10px; margin-top:12px;">
-             <button data-action="verifyCode" data-nivel="superior" id="btn-superior" class="btn-verify flex-icon" style="flex:1; background:var(--nivel-superior);"><i data-lucide="swords"></i> Enfrentar Boss</button>
-             <button data-action="llevarAlSimulador" data-nivel="superior" class="btn-verify flex-icon" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+             <button id="btn-superior" class="btn-verify flex-icon" onclick="window.verifyCode('superior')" style="flex:1; background:var(--nivel-superior);"><i data-lucide="swords"></i> Enfrentar Boss</button>
+             <button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('superior')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
           </div>
           <div id="feedback-superior" class="feedback"></div>
         </div>
@@ -348,11 +269,8 @@
     </div>
     
     <div class="modal-tabs">
-      <button class="tab-btn active" id="btn-tab-ranking" data-action="cambiarTabGamificacion" data-tab="ranking"><i data-lucide="trophy"></i> Ranking Global</button> 
-      <button class="tab-btn" id="btn-tab-tienda" data-action="cambiarTabGamificacion" data-tab="tienda"><i data-lucide="shopping-bag"></i> Tienda de Perfil</button> 
-      <button class="tab-btn" id="btn-tab-powerups" data-action="cambiarTabGamificacion" data-tab="powerups"><i data-lucide="zap"></i> Power-Ups</button> 
-      <button class="tab-btn" id="btn-tab-logros" data-action="cambiarTabGamificacion" data-tab="logros"><i data-lucide="award"></i> Mis Logros</button> 
-      <button class="tab-btn" id="btn-tab-stats" data-action="cambiarTabGamificacion" data-tab="stats"><i data-lucide="bar-chart-2"></i> Estadísticas</button> 
+      <button class="tab-btn active" id="btn-tab-ranking" onclick="window.cambiarTabGamificacion('ranking')"><i data-lucide="trophy"></i> Ranking Global</button>
+      <button class="tab-btn" id="btn-tab-tienda" onclick="window.cambiarTabGamificacion('tienda')"><i data-lucide="shopping-bag"></i> Tienda de Perfil</button>
     </div>
 
     <div id="tab-ranking" class="tab-content" style="display:block;">
@@ -378,29 +296,6 @@
       <div class="store-grid" id="store-themes"></div>
     </div>
     
-    <div id="tab-powerups" class="tab-content" style="display:none;">
-      <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; margin-top: 25px;">⚡ Power-Ups Disponibles</h4> 
-      <div class="store-grid" id="store-powerups"></div>
-      <button id="btn-cerrar-modal" style="display:none;"></button>
-    </div>
-    
-    <div id="tab-stats" class="tab-content" style="display:none;">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h3 style="color: var(--wokwi-blue);">📊 Tu Perfil de Ingeniería</h3>
-        <p style="font-size: 0.9rem; color: var(--text-muted);">Visualiza tus fortalezas en electrónica, código y lógica.</p>
-      </div>
-      <div style="max-width: 350px; margin: 0 auto;"><canvas id="skillsChart"></canvas></div>
-      <div id="skills-feedback" style="margin-top: 20px; padding: 15px; background: rgba(128,128,128,0.1); border-radius: 12px; text-align: center; font-size: 0.9rem;"></div>
-    </div>
-
-    <div id="tab-logros" class="tab-content" style="display:none;">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h3 style="color: var(--accent);">🏅 Galería de Trofeos</h3>
-        <p style="font-size: 0.9rem; color: var(--text-muted);">Demuestra tus habilidades completando desafíos especiales.</p>
-      </div>
-      <div class="achievements-grid" id="logros-container"></div>
-    </div>
-    
   </div>
 </div>
 
@@ -415,7 +310,7 @@
           <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#2f81f7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
           <div style="text-align: left;">
             <h2 style="font-size: 1.6rem; color: #0d1117; margin: 0; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Instituto Técnico Superior</h2>
-            <h3 style="font-size: 1.1rem; color: #484f58; margin: 0; font-weight: 600;">ArduLabs - Nivel Arduino</h3>
+            <h3 style="font-size: 1.1rem; color: #484f58; margin: 0; font-weight: 600;">Wokwi Academy - Nivel Arduino</h3>
           </div>
         </div>
         <h1 style="font-size: 2.8rem; color: #0d1117; margin: 5px 0; font-weight: 800; letter-spacing: 2px;">CERTIFICADO DE EXCELENCIA</h1>
