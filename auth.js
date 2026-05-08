@@ -86,8 +86,13 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
                         volts: 0, monedas: 0, streak: 0, lastLogin: new Date().toISOString(),
                         progress: {}, records: {}, savedCodes: {}, drafts: {}, teoria: {},
                         avatar: "user", theme: "blue", themeMode: "dark", inventory: { avatars: ["user"], themes: ["blue"] },
-                        collectiveRewardClaimed: false,
-                        blocked: false
+                        achievements: [],
+                        collectiveRewardClaimed: false, // Corrected: Added comma
+                        blocked: false,
+                        language: "es",
+                        nivelDificultad: "estandar",
+                        piarProfile: "ninguno",
+                        teacherFeedback: null
                     };
                     await saveToFirebase(user.uid, currentData);
                 }
@@ -99,6 +104,10 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
                 currentData.inventory = currentData.inventory || { avatars: ["user"], themes: ["blue"] };
                 currentData.collectiveRewardClaimed = currentData.collectiveRewardClaimed || false;
                 currentData.blocked = currentData.blocked || false;
+                currentData.language = currentData.language || "es";
+                currentData.nivelDificultad = currentData.nivelDificultad || "estandar";
+                currentData.piarProfile = currentData.piarProfile || "ninguno";
+                currentData.teacherFeedback = currentData.teacherFeedback || null;
 
                 hideLoginLoading();
                 updateState({ userData: currentData });

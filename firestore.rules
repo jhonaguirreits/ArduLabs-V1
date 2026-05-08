@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default: Deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Authentication ---
+    // All operations require an authenticated user.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // --- User Roles ---
+    // Helper functions to check user roles based on 'config/roles' document
+    // IMPORTANT: 'get' operations on config/roles are cached for a short period.
+    // For real-time role changes, consider using custom claims or re-authenticating.
+    function getRoles() {
+      return get(/databases/$(database)/documents/config/roles).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getRoles().adminEmail == request.auth.token.email;
+    }
+
+    function isSecondaryTeacher() {
+      return isAuthenticated() && getRoles().docentes.hasAny([request.auth.token.email]);
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      // A user can only read their own document
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+
+      // A user can only write to their own document
+      // Validate fields to prevent arbitrary changes (e.g., increasing coins, changing roles)
+      allow write: if isAuthenticated() && request.auth.uid == userId &&
+                     // Ensure email, uid, grado, blocked, piarProfile, nivelDificultad are not changed by the user
+                     request.resource.data.email == resource.data.email &&
+                     request.resource.data.uid == resource.data.uid &&
+                     request.resource.data.grado == resource.data.grado &&
+                     request.resource.data.blocked == resource.data.blocked &&
+                     request.resource.data.piarProfile == resource.data.piarProfile &&
+                     request.resource.data.nivelDificultad == resource.data.nivelDificultad &&
+                     // Prevent arbitrary changes to sensitive fields (monedas, volts, streak)
+                     request.resource.data.monedas <= resource.data.monedas + 100 && // Max 100 coins increase per write
+                     request.resource.data.volts <= resource.data.volts + 30 &&   // Max 30 volts increase per write
+                     request.resource.data.streak >= resource.data.streak &&      // Streak can only increase or stay same
+                     // Only allow specific fields to be updated by the user (gameplay related)
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                       'lastLogin', 'progress', 'records', 'savedCodes', 'drafts', 'teoria',
+                       'avatar', 'theme', 'themeMode', 'inventory', 'achievements',
+                       'collectiveRewardClaimed', 'items', 'language', 'teacherFeedback',
+                       'monedas', 'volts', 'streak' // These are allowed to change via game logic
+                     ]);
+
+      // Admin can read/write any user document
+      allow read, write: if isAdmin();
+
+      // Secondary teachers can read/write students in their assigned groups
+      allow read, write: if isSecondaryTeacher() &&
+                         getRoles().gruposPorDocente[request.auth.token.email].hasAny([resource.data.grado]);
+    }
+
+    // --- Config Collection (Roles, Collective Challenge) ---
+    match /config/{configId} {
+      // Only Admin can read/write config data
+      allow read, write: if isAdmin();
+
+      // Allow all authenticated users to read collectiveChallenge progress
+      match /config/collectiveChallenge {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin() && request.resource.data.totalRetos == 0; // Only admin can reset
+        allow update: if isAuthenticated() && request.resource.data.totalRetos == resource.data.totalRetos + 1; // Only allow increment by 1
+      }
+    }
+
+    // --- Classes Collection ---
+    match /classes/{classId} {
+      // Admin can read/write any class config
+      allow read, write: if isAdmin();
+      // Secondary teachers can read/write their assigned classes
+      allow read, write: if isSecondaryTeacher() && getRoles().gruposPorDocente[request.auth.token.email].hasAny([classId]);
+      // Students can read their own class config (to get evaluativeWeeks, etc.)
+      allow read: if isAuthenticated() && request.auth.token.email in resource.data.allowedEmails;
+    }
+
+    // --- Notifications Collection ---
+    match /notifications/{notificationId} {
+      // All authenticated users can write notifications
+      allow write: if isAuthenticated();
+      // Users can read notifications for their own grade
+      allow read: if isAuthenticated() && resource.data.grado == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.grado;
+      // Admin/Teachers can read all notifications
+      allow read: if isAdmin() || isSecondaryTeacher();
+    }
+  }
+}

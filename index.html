@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wokwi Academy V7 | CodeQuestPro Cloud</title>
+  <title>ArduLabs | diseñado por docente Jhon Jairo Aguirre</title>
   
   <!-- CodeMirror -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
@@ -21,9 +21,12 @@
 
 <div id="screen-login" class="screen active">
   <div class="login-container" style="text-align: center;">
-    <h1 class="login-title flex-icon" style="justify-content: center;"><i data-lucide="cloud"></i> Wokwi Academy</h1>
-    <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">
+    <h1 class="login-title flex-icon" style="justify-content: center;"><i data-lucide="cloud"></i> ArduLabs</h1>
+    <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.95rem;">
       Acceso exclusivo para estudiantes<br><strong>Solo @itspereira.edu.co</strong>
+    </p>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 25px;">
+      Diseñado por docente Jhon Jairo Aguirre<br>Derechos Reservados
     </p>
     
     <button id="btn-login-google" class="btn-login" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; border: 2px solid #ddd;">
@@ -60,26 +63,33 @@
       <button class="tab-btn active" id="btn-tab-estudiantes" data-action="cambiarTabDocente" data-tab="estudiantes"><i data-lucide="users"></i> Panel de Estudiantes</button>
       <button class="tab-btn" id="btn-tab-gestion" data-action="cambiarTabDocente" data-tab="gestion-docentes"><i data-lucide="user-cog"></i> Gestionar Docentes</button>
       <button class="tab-btn" id="btn-tab-matricula" data-action="cambiarTabDocente" data-tab="matricula"><i data-lucide="book-user"></i> Gestión de Matrícula</button>
+      <button class="tab-btn" id="btn-tab-curriculo" data-action="cambiarTabDocente" data-tab="curriculo"><i data-lucide="calendar-range"></i> Configuración de Semanas</button>
       <button class="tab-btn" id="btn-tab-piar" data-action="cambiarTabDocente" data-tab="piar-report"><i data-lucide="accessibility"></i> Reporte PIAR</button>
       <button class="tab-btn" id="btn-tab-admin-tools" data-action="cambiarTabDocente" data-tab="admin-tools"><i data-lucide="shield"></i> Herramientas de Admin</button>
     </div>
 
     <div id="tab-estudiantes" style="display: block;">
       <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Filtros de Grupo</h2>
-        <select id="filtro-grupo" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 1rem; cursor: pointer;">
-          <option value="TODOS">Todos los grupos</option>
-          <option value="10A">Grado 10A</option>
-          <option value="10B">Grado 10B</option>
-          <option value="11A">Grado 11A</option>
-          <option value="11B">Grado 11B</option>
-        </select>
+        <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Búsqueda y Filtros</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <select id="filtro-grupo" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 0.9rem; cursor: pointer; flex: 1;">
+            <option value="TODOS">Todos los Grados</option>
+          </select>
+          <select id="filtro-asignatura" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 0.9rem; cursor: pointer; flex: 1;">
+            <option value="TODOS">Todas las Asignaturas</option>
+          </select>
+          <select id="filtro-anio" style="padding: 10px; border-radius: 6px; background: var(--code-bg); color: var(--text-light); border: 1px solid var(--border-color); font-size: 0.9rem; cursor: pointer; width: 120px;">
+            <option value="TODOS">Todos los Años</option>
+          </select>
+        </div>
         
         <div id="teacher-secondary-controls" class="teacher-secondary-controls">
           <h3 style="color: var(--wokwi-blue);">Bienvenido, <span id="docente-name"></span></h3>
-          <div class="management-container">
-            <input type="text" id="new-group-name" placeholder="Ej: 10A, 11B...">
-            <button id="btn-add-my-group" data-action="addMyGroup"><i data-lucide="plus"></i> Añadir Grupo</button>
+          <div class="management-container" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <input type="text" id="new-group-name" placeholder="Grado (10A)" style="flex: 1;">
+            <input type="text" id="new-group-subject" placeholder="Asignatura (Robótica)" style="flex: 1;">
+            <input type="number" id="new-group-year" placeholder="Año (2024)" style="width: 100px;">
+            <button id="btn-add-my-group" data-action="addMyGroup" style="white-space: nowrap;"><i data-lucide="plus"></i> Crear Clase</button>
           </div>
           <div id="my-groups-list" class="docentes-list"></div>
         </div>
@@ -106,6 +116,10 @@
     </div>
 
     <div id="tab-matricula" style="display: none;">
+      <!-- Contenido generado dinámicamente en teacher.js -->
+    </div>
+
+    <div id="tab-curriculo" style="display: none;">
       <!-- Contenido generado dinámicamente en teacher.js -->
     </div>
 
@@ -142,7 +156,7 @@
 <header>
   <div class="header-top">
     <div class="header-title flex-icon">
-      <i data-lucide="terminal"></i> Wokwi Academy
+      <i data-lucide="terminal"></i> ArduLabs
       
       <div id="stats-panel" class="stats-panel" style="display:none;">
         <div class="stat-badge streak-badge flex-icon" title="Racha de estudio continuo">
@@ -251,8 +265,8 @@
             <div class="eval-header-right"><span id="record-basico" class="record-display" style="display:none"></span><span id="timer-basico" class="timer-display">⏱ 00:00</span></div>
           </div>
           <div class="input-wrap" id="editor-basico-container">
-            <div id="bloques-basico" class="tags-container" style="margin-bottom:10px; display:none;"></div>
-            <textarea id="input-basico" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea>
+            <div id="bloques-basico" class="tags-container" style="margin-bottom:10px; display:none;"></div> 
+            <textarea id="input-basico" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea> 
             <div class="syntax-bar" id="syntax-basico"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
             <div id="kbd-basico" class="virtual-keyboard"></div>
           </div>
@@ -277,8 +291,8 @@
             <div class="eval-header-right"><span id="record-alto" class="record-display" style="display:none"></span><span id="timer-alto" class="timer-display">⏱ 00:00</span></div>
           </div>
           <div class="input-wrap" id="editor-alto-container">
-            <div id="bloques-alto" class="tags-container" style="margin-bottom:10px; display:none;"></div>
-            <textarea id="input-alto" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea>
+            <div id="bloques-alto" class="tags-container" style="margin-bottom:10px; display:none;"></div> 
+            <textarea id="input-alto" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea> 
             <div class="syntax-bar" id="syntax-alto"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
             <div id="kbd-alto" class="virtual-keyboard"></div>
           </div>
@@ -303,8 +317,8 @@
             <div class="eval-header-right"><span id="record-superior" class="record-display" style="display:none"></span><span id="timer-superior" class="timer-display">⏱ 00:00</span></div>
           </div>
           <div class="input-wrap" id="editor-superior-container">
-            <div id="bloques-superior" class="tags-container" style="margin-bottom:10px; display:none;"></div>
-            <textarea id="input-superior" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea>
+            <div id="bloques-superior" class="tags-container" style="margin-bottom:10px; display:none;"></div> 
+            <textarea id="input-superior" class="code-input" placeholder="Pega tu código modificado aquí..." style="display:none;"></textarea> 
             <div class="syntax-bar" id="syntax-superior"><span class="syntax-chip chip-info">Escribe tu código para analizar...</span></div>
             <div id="kbd-superior" class="virtual-keyboard"></div>
           </div>
@@ -334,10 +348,10 @@
     </div>
     
     <div class="modal-tabs">
-      <button class="tab-btn active" id="btn-tab-ranking" data-action="cambiarTabGamificacion" data-tab="ranking"><i data-lucide="trophy"></i> Ranking Global</button>
-      <button class="tab-btn" id="btn-tab-tienda" data-action="cambiarTabGamificacion" data-tab="tienda"><i data-lucide="shopping-bag"></i> Tienda de Perfil</button>
-      <button class="tab-btn" id="btn-tab-logros"><i data-lucide="award"></i> Mis Logros</button>
-      <button class="tab-btn" id="btn-tab-stats"><i data-lucide="bar-chart-2"></i> Estadísticas</button>
+      <button class="tab-btn active" id="btn-tab-ranking" data-action="cambiarTabGamificacion" data-tab="ranking"><i data-lucide="trophy"></i> Ranking Global</button> 
+      <button class="tab-btn" id="btn-tab-tienda" data-action="cambiarTabGamificacion" data-tab="tienda"><i data-lucide="shopping-bag"></i> Tienda de Perfil</button> 
+      <button class="tab-btn" id="btn-tab-logros" data-action="cambiarTabGamificacion" data-tab="logros"><i data-lucide="award"></i> Mis Logros</button> 
+      <button class="tab-btn" id="btn-tab-stats" data-action="cambiarTabGamificacion" data-tab="stats"><i data-lucide="bar-chart-2"></i> Estadísticas</button> 
     </div>
 
     <div id="tab-ranking" class="tab-content" style="display:block;">
@@ -362,8 +376,8 @@
       <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; margin-top: 25px;">🎨 Temas de la Plataforma</h4>
       <div class="store-grid" id="store-themes"></div>
     </div>
-
-    <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; margin-top: 25px;">⚡ Power-Ups</h4>
+    
+    <h4 style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; margin-top: 25px;">⚡ Power-Ups</h4> 
     <div class="store-grid" id="store-powerups"></div>
     
     <div id="tab-stats" class="tab-content" style="display:none;">
@@ -397,7 +411,7 @@
           <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#2f81f7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
           <div style="text-align: left;">
             <h2 style="font-size: 1.6rem; color: #0d1117; margin: 0; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Instituto Técnico Superior</h2>
-            <h3 style="font-size: 1.1rem; color: #484f58; margin: 0; font-weight: 600;">Wokwi Academy - Nivel Arduino</h3>
+            <h3 style="font-size: 1.1rem; color: #484f58; margin: 0; font-weight: 600;">ArduLabs - Nivel Arduino</h3>
           </div>
         </div>
         <h1 style="font-size: 2.8rem; color: #0d1117; margin: 5px 0; font-weight: 800; letter-spacing: 2px;">CERTIFICADO DE EXCELENCIA</h1>

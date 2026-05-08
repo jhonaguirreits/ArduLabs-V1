@@ -1,5 +1,5 @@
-import { doc, setDoc, getDoc, deleteDoc, updateDoc, collection, getDocs, query, orderBy, limit, where, arrayUnion, arrayRemove } from '../modules/firestore.js';
-import { ADMIN_EMAIL, weeks, PERFILES_PIAR } from '../modules/constants.js';
+import { doc, setDoc, getDoc, deleteDoc, updateDoc, collection, getDocs, query, orderBy, limit, where, arrayUnion, arrayRemove } from './firestore.js';
+import { ADMIN_EMAIL, weeks, PERFILES_PIAR, translations } from './constants.js';
 import { getState } from './state.js';
 import { showToast } from './app.js';
 
@@ -36,6 +36,37 @@ export const iniciarAppDocente = async () => {
     await renderTeacherDashboard();
 };
 
+const populateFilters = async (docenteEmail, esAdmin) => {
+    const rolesDoc = await getDoc(doc(_db, "config", "roles"));
+    if (!rolesDoc.exists()) return;
+    
+    const grupos = esAdmin ? Object.values(rolesDoc.data().gruposPorDocente || {}).flat() : rolesDoc.data().gruposPorDocente?.[docenteEmail] || [];
+    
+    const selectGrupo = document.getElementById('filtro-grupo');
+    const selectAsig = document.getElementById('filtro-asignatura');
+    const selectAnio = document.getElementById('filtro-anio');
+
+    // Clear previous options except "TODOS"
+    selectGrupo.innerHTML = '<option value="TODOS">Todos los Grados</option>';
+    selectAsig.innerHTML = '<option value="TODOS">Todas las Asignaturas</option>';
+    selectAnio.innerHTML = '<option value="TODOS">Todos los Años</option>';
+    
+    const asigs = new Set(); const anios = new Set();
+
+    for (const gId of grupos) {
+        const classDoc = await getDoc(doc(_db, "classes", gId));
+        if (classDoc.exists()) {
+            const d = classDoc.data();
+            if (d.subject) asigs.add(d.subject);
+            if (d.year) anios.add(d.year);
+        }
+        selectGrupo.innerHTML += `<option value="${gId}">${gId}</option>`;
+    }
+
+    asigs.forEach(a => { if(![...selectAsig.options].some(o => o.value === a)) selectAsig.innerHTML += `<option value="${a}">${a}</option>`; });
+    anios.forEach(y => { if(![...selectAnio.options].some(o => o.value === y)) selectAnio.innerHTML += `<option value="${y}">${y}</option>`; });
+};
+
 export const renderTeacherDashboard = async () => {
     const { esAdmin, esDocenteSecundario, currentUser } = getState();
     if (!_db) return; // Evita ejecución si no está inicializado
@@ -44,41 +75,72 @@ export const renderTeacherDashboard = async () => {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;"><i data-lucide="loader-2" class="lucide-spin"></i> Cargando estudiantes desde Firebase...</td></tr>`;
     if (_lucideCreateIcons) _lucideCreateIcons();
 
+    await populateFilters(currentUser.email, esAdmin);
+
     let filtroGrupos = [];
+    const filtroGrupo = document.getElementById('filtro-grupo').value;
+    const filtroAsig = document.getElementById('filtro-asignatura').value;
+    const filtroAnio = document.getElementById('filtro-anio').value;
+
     if (esAdmin) {
-        const filtroSeleccionado = document.getElementById('filtro-grupo').value;
-        if (filtroSeleccionado !== "TODOS") {
-            filtroGrupos.push(filtroSeleccionado);
-        }
+        if (filtroGrupo !== "TODOS") filtroGrupos.push(filtroGrupo);
     } else if (esDocenteSecundario && currentUser) {
         const rolesDoc = await getDoc(doc(_db, "config", "roles"));
         if (rolesDoc.exists()) {
             const docenteData = rolesDoc.data().gruposPorDocente?.[currentUser.email];
             // Si el docente tiene grupos, usamos esos como filtro. Si no, no mostrará nada.
-            if (docenteData && docenteData.length > 0) filtroGrupos = docenteData;
+            if (docenteData && docenteData.length > 0) {
+                // Filter docenteData by selected filters (subject, year)
+                for (const gId of docenteData) {
+                    const classDoc = await getDoc(doc(_db, "classes", gId));
+                    if (classDoc.exists()) {
+                        const d = classDoc.data();
+                        const matchAsig = filtroAsig === "TODOS" || d.subject === filtroAsig;
+                        const matchAnio = filtroAnio === "TODOS" || d.year === parseInt(filtroAnio);
+                        if (matchAsig && matchAnio) {
+                            filtroGrupos.push(gId);
+                        }
+                    }
+                }
+            }
         }
     }
 
     try {
         const q = filtroGrupos.length > 0
-            ? query(collection(_db, "users"), where("grado", "in", filtroGrupos))
+            ? query(collection(_db, "users"), where("grado", "in", filtroGrupos), where("email", "!=", ADMIN_EMAIL))
             : query(collection(_db, "users"));
 
         const querySnapshot = await getDocs(q);
         _allStudentsData = [];
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
-            if (data.email !== ADMIN_EMAIL) _allStudentsData.push(data);
+            _allStudentsData.push(data);
         });
 
         tbody.innerHTML = '';
-        const totalRetos = Object.keys(weeks).length * 3;
+        // Obtener configuración de semanas para cada grado mostrado
+        const cacheClases = {};
+        for (const g of [...new Set(_allStudentsData.map(s => s.grado))]) {
+            const cDoc = await getDoc(doc(_db, "classes", g));
+            cacheClases[g] = cDoc.exists() ? (cDoc.data().evaluativeWeeks || Object.keys(weeks)) : Object.keys(weeks);
+        }
 
         _allStudentsData.forEach(est => {
+            const semanasActivas = cacheClases[est.grado] || Object.keys(weeks);
+            const totalRetosClase = semanasActivas.length * 3;
+            
             let completados = 0;
-            if (est.progress) { Object.values(est.progress).forEach(val => { if (val === true) completados++; }); }
+            if (est.progress) { 
+                // Solo contar retos de las semanas evaluativas
+                semanasActivas.forEach(sem => {
+                    ['basico', 'alto', 'superior'].forEach(n => {
+                        if (est.progress[`reto_${sem}_${n}`] === true) completados++;
+                    });
+                });
+            }
 
-            const porcentaje = (completados / totalRetos) * 100;
+            const porcentaje = totalRetosClase > 0 ? (completados / totalRetosClase) * 100 : 0;
             const notaFinal = ((porcentaje / 100) * 4.0) + 1.0;
 
             tbody.innerHTML += `
@@ -122,6 +184,11 @@ export const renderTeacherDashboard = async () => {
         if (_allStudentsData.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay estudiantes para los grupos seleccionados.</td></tr>`;
         }
+        // Re-render filters to ensure selected values are maintained
+        document.getElementById('filtro-grupo').value = filtroGrupo;
+        document.getElementById('filtro-asignatura').value = filtroAsig;
+        document.getElementById('filtro-anio').value = filtroAnio;
+
         if (_lucideCreateIcons) _lucideCreateIcons();
     } catch (e) {
         console.error("Error al cargar dashboard", e);
@@ -192,7 +259,7 @@ export const exportarCSV = () => {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `Planilla_Notas_Wokwi_${filtro}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Planilla_Notas_ArduLabs_${filtro}_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -203,12 +270,14 @@ export const cambiarTabDocente = (tab) => {
     document.getElementById('tab-estudiantes').style.display = 'none';
     document.getElementById('tab-gestion-docentes').style.display = 'none';
     document.getElementById('tab-matricula').style.display = 'none';
+    document.getElementById('tab-curriculo').style.display = 'none';
     document.getElementById('tab-piar-report').style.display = 'none';
     if (document.getElementById('tab-admin-tools')) document.getElementById('tab-admin-tools').style.display = 'none';
 
     document.getElementById('btn-tab-estudiantes').classList.remove('active');
     document.getElementById('btn-tab-gestion').classList.remove('active');
     document.getElementById('btn-tab-matricula').classList.remove('active');
+    document.getElementById('btn-tab-curriculo').classList.remove('active');
     document.getElementById('btn-tab-piar').classList.remove('active');
     if (document.getElementById('btn-tab-admin-tools')) document.getElementById('btn-tab-admin-tools').classList.remove('active');
 
@@ -221,11 +290,73 @@ export const cambiarTabDocente = (tab) => {
     } else if (tab === 'piar-report') {
         document.getElementById('btn-tab-piar').classList.add('active');
         renderPiarReportUI();
-    } else if (tab === 'matricula') {
+    } else if (tab === 'matricula') { // Corrected: Added matricula tab handling
         document.getElementById('btn-tab-matricula').classList.add('active');
         renderMatriculaUI();
+    } else if (tab === 'curriculo') {
+        document.getElementById('btn-tab-curriculo').classList.add('active');
+        renderCurriculoUI();
     }
     if (_lucideCreateIcons) _lucideCreateIcons();
+};
+
+export const renderCurriculoUI = async () => {
+    const { currentUser } = getState();
+    const roles = await getRoles();
+    const misGrupos = roles.gruposPorDocente?.[currentUser.email] || [];
+    const container = document.getElementById('tab-curriculo');
+    
+    container.innerHTML = `
+        <div class="card">
+            <h2><i data-lucide="calendar-range"></i> Configuración de Semanas Evaluativas</h2>
+            <p style="color: var(--text-muted); margin-bottom:15px;">Selecciona qué semanas se tomarán en cuenta para la nota de este grado.</p>
+            <div class="management-container">
+                <select id="select-grupo-curriculo" style="padding:10px; border-radius:6px; background:var(--code-bg); color:var(--text-light); border:1px solid var(--border-color);">
+                    ${misGrupos.map(g => `<option value="${g}">${g}</option>`).join('') || '<option value="">Sin grupos</option>'}
+                </select>
+            </div>
+            <div id="weeks-config-list" style="margin-top:20px; display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;"></div>
+        </div>
+    `;
+    
+    const selector = document.getElementById('select-grupo-curriculo');
+    if (selector) {
+        selector.addEventListener('change', () => updateWeeksConfigUI(selector.value));
+        if (misGrupos.length > 0) updateWeeksConfigUI(misGrupos[0]);
+    }
+    if (_lucideCreateIcons) _lucideCreateIcons();
+};
+
+const updateWeeksConfigUI = async (grupo) => {
+    const container = document.getElementById('weeks-config-list');
+    if (!grupo) return;
+    
+    const classDoc = await getDoc(doc(_db, "classes", grupo));
+    const evaluativeWeeks = classDoc.exists() ? (classDoc.data().evaluativeWeeks || Object.keys(weeks)) : Object.keys(weeks);
+    
+    container.innerHTML = Object.keys(weeks).map(wKey => `
+        <label class="docente-item" style="cursor:pointer; ${evaluativeWeeks.includes(wKey) ? 'border-color:var(--accent)' : ''}">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" data-action="toggleWeek" data-grupo="${grupo}" data-week="${wKey}" ${evaluativeWeeks.includes(wKey) ? 'checked' : ''}>
+                <span>${wKey}: ${weeks[wKey].title}</span>
+            </div>
+        </label>
+    `).join('');
+};
+
+export const toggleWeekForClass = async (grupo, weekKey, isChecked) => {
+    const classRef = doc(_db, "classes", grupo);
+    try {
+        if (isChecked) {
+            await updateDoc(classRef, { evaluativeWeeks: arrayUnion(weekKey) });
+        } else {
+            await updateDoc(classRef, { evaluativeWeeks: arrayRemove(weekKey) });
+        }
+        showToast(`Currículo de ${grupo} actualizado`, "success");
+        updateWeeksConfigUI(grupo);
+    } catch (e) {
+        showToast("Error al actualizar currículo", "error");
+    }
 };
 
 const getRoles = async () => {
@@ -248,79 +379,6 @@ export const renderTeacherManagementUI = async () => {
         </div>
     `).join('');
     if (_lucideCreateIcons) _lucideCreateIcons();
-};
-
-export const renderMatriculaUI = async () => {
-    const { currentUser } = getState();
-    const roles = await getRoles();
-    const misGrupos = roles.gruposPorDocente?.[currentUser.email] || [];
-    const container = document.getElementById('tab-matricula');
-    
-    let options = misGrupos.map(g => `<option value="${g}">${g}</option>`).join('');
-    
-    container.innerHTML = `
-        <div class="card">
-            <h2><i data-lucide="book-user"></i> Gestión de Matrícula</h2>
-            <p style="color: var(--text-muted); margin-bottom:15px;">Solo los correos aquí listados podrán entrar al grado correspondiente.</p>
-            <div class="management-container">
-                <select id="select-grupo-matricula" style="padding:10px; border-radius:6px; background:var(--code-bg); color:var(--text-light); border:1px solid var(--border-color);">
-                    ${options || '<option value="">Sin grupos asignados</option>'}
-                </select>
-                <input type="email" id="new-student-email" placeholder="estudiante@itspereira.edu.co">
-                <button data-action="addStudentToClass"><i data-lucide="plus"></i> Matricular</button>
-            </div>
-            <div id="students-allowed-list" class="docentes-list" style="margin-top:20px;"></div>
-        </div>
-    `;
-    
-    const selector = document.getElementById('select-grupo-matricula');
-    if (selector) {
-        selector.addEventListener('change', () => updateAllowedListUI(selector.value));
-        if (misGrupos.length > 0) updateAllowedListUI(misGrupos[0]);
-    }
-    
-    if (_lucideCreateIcons) _lucideCreateIcons();
-};
-
-const updateAllowedListUI = async (grupo) => {
-    const container = document.getElementById('students-allowed-list');
-    if (!grupo) return container.innerHTML = '';
-    
-    const classDoc = await getDoc(doc(_db, "classes", grupo));
-    const allowedEmails = classDoc.exists() ? (classDoc.data().allowedEmails || []) : [];
-    
-    container.innerHTML = allowedEmails.map(email => `
-        <div class="docente-item">
-            <span>${email}</span>
-            <button class="btn-delete-docente" data-action="removeStudentFromClass" data-email="${email}" data-grupo="${grupo}"><i data-lucide="user-minus"></i></button>
-        </div>
-    `).join('') || '<p style="text-align:center; color:var(--text-muted);">No hay estudiantes matriculados en este grupo.</p>';
-    if (_lucideCreateIcons) _lucideCreateIcons();
-};
-
-export const addStudentToClass = async () => {
-    const grupo = document.getElementById('select-grupo-matricula').value;
-    const input = document.getElementById('new-student-email');
-    const email = input.value.trim().toLowerCase();
-    
-    if (email && email.endsWith('@itspereira.edu.co') && grupo) {
-        await setDoc(doc(_db, "classes", grupo), {
-            allowedEmails: arrayUnion(email),
-            lastUpdatedBy: getState().currentUser.email
-        }, { merge: true });
-        input.value = '';
-        showToast(`Estudiante matriculado en ${grupo}`, "success");
-        updateAllowedListUI(grupo);
-    } else {
-        showToast("Correo inválido o institucional requerido", "warning");
-    }
-};
-
-export const removeStudentFromClass = async (email, grupo) => {
-    if (confirm(`¿Eliminar a ${email} del grupo ${grupo}?`)) {
-        await updateDoc(doc(_db, "classes", grupo), { allowedEmails: arrayRemove(email) });
-        updateAllowedListUI(grupo);
-    }
 };
 
 export const addDocente = async () => {
@@ -384,6 +442,10 @@ export const renderSecondaryTeacherUI = async () => {
     const { currentUser } = getState();
     const roles = await getRoles();
     const misGrupos = roles.gruposPorDocente?.[currentUser.email] || [];
+
+    // Populate filters for the current teacher
+    await populateFilters(currentUser.email, false);
+
     const container = document.getElementById('my-groups-list');
 
     document.getElementById('docente-name').textContent = currentUser.displayName || currentUser.email;
@@ -395,7 +457,10 @@ export const renderSecondaryTeacherUI = async () => {
         </div>
     `).join('');
     if (_lucideCreateIcons) _lucideCreateIcons();
-    await renderTeacherDashboard();
+    // Re-render dashboard after group changes to reflect filters
+    document.getElementById('filtro-grupo').addEventListener('change', renderTeacherDashboard);
+    document.getElementById('filtro-asignatura').addEventListener('change', renderTeacherDashboard);
+    document.getElementById('filtro-anio').addEventListener('change', renderTeacherDashboard);
 };
 
 export const addMyGroup = async () => {

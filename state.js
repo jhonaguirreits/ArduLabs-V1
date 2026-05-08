@@ -17,8 +17,9 @@ const state = {
         items: { shields: 0 },
         language: "es",           // es, en
         nivelDificultad: "estandar", // estandar, profundizacion, piar
-        piarProfile: "ninguno"     // ninguno, cognitivo, visual, motriz
-        teacherFeedback: null      // { message: string, timestamp: any }
+        piarProfile: "ninguno",     // ninguno, cognitivo, visual, motriz
+        teacherFeedback: null,      // { message: string, timestamp: any }
+        classData: null             // Datos de la clase (semanas activas, etc)
     },
     esAdmin: false,
     esDocenteSecundario: false,
@@ -58,7 +59,7 @@ export function resetState() {
             nombres: "", email: "", grado: "",
             volts: 0, monedas: 0, streak: 0, lastLogin: "",
             progress: {}, records: {}, savedCodes: {}, drafts: {}, teoria: {},
-            avatar: "user", theme: "blue", themeMode: "dark", inventory: { avatars: ["user"], themes: ["blue"] }
+            avatar: "user", theme: "blue", themeMode: "dark", inventory: { avatars: ["user"], themes: ["blue"] },
             achievements: [],
             collectiveRewardClaimed: false,
             items: { shields: 0 }

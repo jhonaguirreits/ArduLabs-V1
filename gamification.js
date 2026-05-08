@@ -1,5 +1,5 @@
-import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from '../modules/firestore.js';
-import { ADMIN_EMAIL, weeks, tiendaItems, mensajesExito, mensajesFallo, logrosDefiniciones, skillWeights } from '../modules/constants.js';
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from './firestore.js';
+import { ADMIN_EMAIL, weeks, tiendaItems, mensajesExito, mensajesFallo, logrosDefiniciones, skillWeights } from './constants.js';
 import { getState, updateState } from './state.js';
 
 let _db;
@@ -139,10 +139,12 @@ export const cambiarTabGamificacion = (tab) => {
     document.getElementById('btn-tab-tienda').classList.remove('active');
     document.getElementById('btn-tab-logros').classList.remove('active');
     document.getElementById('btn-tab-stats').classList.remove('active');
+    document.getElementById('btn-tab-powerups')?.classList.remove('active'); // Added for powerups tab
     document.getElementById('tab-ranking').style.display = 'none';
     document.getElementById('tab-tienda').style.display = 'none';
     document.getElementById('tab-logros').style.display = 'none';
     document.getElementById('tab-stats').style.display = 'none';
+    document.getElementById('tab-powerups')?.style.display = 'none'; // Added for powerups tab
     document.getElementById(`btn-tab-${tab}`).classList.add('active');
     document.getElementById(`tab-${tab}`).style.display = 'block';
 
@@ -150,6 +152,7 @@ export const cambiarTabGamificacion = (tab) => {
     if (tab === 'tienda') renderTiendaUI();
     if (tab === 'logros') renderLogrosUI();
     if (tab === 'stats') renderEstadisticasUI();
+    // No specific render function for powerups, as they are part of renderTiendaUI
 };
 
 export const cargarRankingNube = async () => {
@@ -197,9 +200,9 @@ export const renderTiendaUI = () => {
     avContainer.innerHTML = tiendaItems.avatars.map(item => {
         let isOwned = userData.inventory.avatars.includes(item.id);
         let isActive = userData.avatar === item.id;
-        let btnHtml = isActive ? `<button class="btn-equipped">Equipado</button>` :
-            (isOwned ? `<button class="btn-equip" data-action="equiparArticulo" data-tipo="avatar" data-id="${item.id}">Equipar</button>` :
-                `<button class="btn-buy" data-action="comprarArticulo" data-tipo="avatar" data-id="${item.id}">Comprar 🪙 ${item.price}</button>`);
+        let btnHtml = isActive ? `<button class="btn-equipped">Equipado</button>` : // Corrected: Removed `window.`
+            (isOwned ? `<button class="btn-equip" data-action="equiparArticulo" data-tipo="avatar" data-id="${item.id}">Equipar</button>` : // Corrected: Changed to data-action
+                `<button class="btn-buy" data-action="comprarArticulo" data-tipo="avatar" data-id="${item.id}">Comprar 🪙 ${item.price}</button>`); // Corrected: Changed to data-action
 
         return `<div class="store-item ${isOwned ? 'owned' : ''} ${isActive ? 'active' : ''}">
             <i data-lucide="${item.icon}" style="width:40px; height:40px; color:${isActive ? 'var(--wokwi-blue)' : 'var(--text-light)'};"></i>
@@ -212,9 +215,9 @@ export const renderTiendaUI = () => {
     thContainer.innerHTML = tiendaItems.themes.map(item => {
         let isOwned = userData.inventory.themes.includes(item.id);
         let isActive = userData.theme === item.id;
-        let btnHtml = isActive ? `<button class="btn-equipped" style="background:${item.color};">Equipado</button>` :
-            (isOwned ? `<button class="btn-equip" data-action="equiparArticulo" data-tipo="theme" data-id="${item.id}">Equipar</button>` :
-                `<button class="btn-buy" data-action="comprarArticulo" data-tipo="theme" data-id="${item.id}">Comprar 🪙 ${item.price}</button>`);
+        let btnHtml = isActive ? `<button class="btn-equipped" style="background:${item.color};">Equipado</button>` : // Corrected: Removed `window.`
+            (isOwned ? `<button class="btn-equip" data-action="equiparArticulo" data-tipo="theme" data-id="${item.id}">Equipar</button>` : // Corrected: Changed to data-action
+                `<button class="btn-buy" data-action="comprarArticulo" data-tipo="theme" data-id="${item.id}">Comprar 🪙 ${item.price}</button>`); // Corrected: Changed to data-action
 
         return `<div class="store-item ${isOwned ? 'owned' : ''} ${isActive ? 'active' : ''}">
             <div style="width:40px; height:40px; border-radius:50%; background:${item.color}; border: 2px solid var(--border-color);"></div>
@@ -222,16 +225,6 @@ export const renderTiendaUI = () => {
             ${btnHtml}
         </div>`;
     }).join('');
-
-    if (_lucideCreateIcons) _lucideCreateIcons();
-};
-
-export const renderTiendaUI = () => {
-    const { userData } = getState();
-    document.getElementById('tienda-user-monedas').innerText = userData.monedas;
-
-    // Render Avatars and Themes (existing logic)
-    // ... (existing code for avatars and themes)
 
     const puContainer = document.getElementById('store-powerups');
     puContainer.innerHTML = tiendaItems.powerups.map(item => {
@@ -413,7 +406,7 @@ export const comprarEnergia = (nivel) => {
         _saveToFirebaseCallback(null, newUserData);
         updateState({ userData: newUserData });
 
-        _vidas[nivel] = 3;
+        _vidas[nivel] = 3; // Corrected: Removed `window.`
         document.getElementById(`vidas-${nivel}`).innerHTML = '❤️❤️❤️';
         document.getElementById(`input-${nivel}`).disabled = false;
         document.getElementById(`feedback-${nivel}`).style.display = 'none';
@@ -429,7 +422,7 @@ export const comprarEnergia = (nivel) => {
 export const comprarPista = (nivel) => {
     const { userData, currentRetoId } = getState();
     const newUserData = { ...userData };
-    const reto = weeks[_currentRetoId].retos[nivel];
+    const reto = weeks[currentRetoId].retos[nivel];
     if (_pistasDesbloqueadas[nivel] >= reto.pistas.length) return;
     if (newUserData.volts >= 5) {
         newUserData.volts -= 5;
@@ -454,7 +447,7 @@ export const renderPistas = (nivel, reto) => {
         pistaBox.innerHTML += `<div class="pista-item"><strong>Pista ${i + 1}:</strong> ${reto.pistas[i]}</div>`;
     }
     if (_pistasDesbloqueadas[nivel] < reto.pistas.length) {
-        pistaBox.innerHTML += `<button class="btn-comprar-pista flex-icon" onclick="window.comprarPista('${nivel}')"><i data-lucide="unlock"></i> Comprar Pista (5 ⚡)</button>`;
+        pistaBox.innerHTML += `<button class="btn-comprar-pista flex-icon" data-action="comprarPista" data-nivel="${nivel}"><i data-lucide="unlock"></i> Comprar Pista (5 ⚡)</button>`; // Corrected: Changed to data-action
     }
     if (_lucideCreateIcons) _lucideCreateIcons();
 };
