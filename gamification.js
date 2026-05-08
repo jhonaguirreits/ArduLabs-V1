@@ -410,7 +410,7 @@ export const comprarEnergia = (nivel) => {
         document.getElementById(`vidas-${nivel}`).innerHTML = '❤️❤️❤️';
         document.getElementById(`input-${nivel}`).disabled = false;
         document.getElementById(`feedback-${nivel}`).style.display = 'none';
-        document.getElementById(`btn-container-${nivel}`).innerHTML = `<button id="btn-${nivel}" class="btn-verify flex-icon" onclick="window.verifyCode('${nivel}')" style="flex:1;"><i data-lucide="play"></i> Verificar</button><button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('${nivel}')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>`;
+        document.getElementById(`btn-container-${nivel}`).innerHTML = `<button id="btn-${nivel}" class="btn-verify flex-icon" data-action="verifyCode" data-nivel="${nivel}" style="flex:1;"><i data-lucide="play"></i> Verificar</button><button class="btn-verify flex-icon" data-action="llevarAlSimulador" data-nivel="${nivel}" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>`;
         playLifeSound();
         if (_lucideCreateIcons) _lucideCreateIcons();
     } else {

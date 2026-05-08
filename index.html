@@ -298,8 +298,8 @@
           </div>
           <div id="pista-alto" class="pista-box"></div>
           <div id="btn-container-alto" style="display:flex; gap:10px; margin-top:12px;">
-             <button id="btn-alto" class="btn-verify flex-icon" onclick="window.verifyCode('alto')" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
-             <button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('alto')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+             <button data-action="verifyCode" data-nivel="alto" id="btn-alto" class="btn-verify flex-icon" style="flex:1;"><i data-lucide="play"></i> Verificar</button>
+             <button data-action="llevarAlSimulador" data-nivel="alto" class="btn-verify flex-icon" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
           </div>
           <div id="feedback-alto" class="feedback"></div>
         </div>
@@ -324,8 +324,8 @@
           </div>
           <div id="pista-superior" class="pista-box"></div>
           <div id="btn-container-superior" style="display:flex; gap:10px; margin-top:12px;">
-             <button id="btn-superior" class="btn-verify flex-icon" onclick="window.verifyCode('superior')" style="flex:1; background:var(--nivel-superior);"><i data-lucide="swords"></i> Enfrentar Boss</button>
-             <button class="btn-verify flex-icon" onclick="window.llevarAlSimulador('superior')" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
+             <button data-action="verifyCode" data-nivel="superior" id="btn-superior" class="btn-verify flex-icon" style="flex:1; background:var(--nivel-superior);"><i data-lucide="swords"></i> Enfrentar Boss</button>
+             <button data-action="llevarAlSimulador" data-nivel="superior" class="btn-verify flex-icon" style="flex:1; background:var(--wokwi-blue);"><i data-lucide="external-link"></i> Probar en Simulador</button>
           </div>
           <div id="feedback-superior" class="feedback"></div>
         </div>
