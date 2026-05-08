@@ -1,5 +1,5 @@
 import { doc, setDoc, getDoc, deleteDoc, updateDoc, collection, getDocs, query, orderBy, limit, where, arrayUnion, arrayRemove } from './firestore.js';
-import { ADMIN_EMAIL, weeks, PERFILES_PIAR, translations } from './constants.js';
+import { ADMIN_EMAIL, weeks, PERFILES_PIAR } from './constants.js';
 import { getState } from './state.js';
 import { showToast } from './app.js';
 

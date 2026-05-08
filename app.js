@@ -73,7 +73,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase
 import { ADMIN_EMAIL, mensajesExito, mensajesFallo, competenciasMapa, weeks, tiendaItems, logrosDefiniciones, GEMINI_API_KEY, COLLECTIVE_CHALLENGE_GOAL, ARDUINO_QUICK_COMMANDS } from './constants.js'; // Existing import
 import { initializeAuth, setupAuthListener, loginWithGoogle, logoutUser } from './auth.js'; // New import for auth module
 import { initializeFirestore, doc, setDoc, getDoc, updateDoc, increment, onSnapshot, addDoc, serverTimestamp, collection, query, where, orderBy, limit } from './firestore.js'; // New import for firestore module
-import { initializeGamificationModule, getVidas, resetChallengeState, decrementVida, incrementFallo, unlockPista, cargarDatosGamificacion, abrirModalGamificacion, cerrarModalGamificacion, cambiarTabGamificacion, comprarArticulo, equiparArticulo, reclamarMonedas, ganarVolts, comprarEnergia, comprarPista, renderPistas, playCoinSound, playErrorSound, getMensajesExito, getMensajesFallo, initAudio } from './gamification.js'; // New import for gamification module
+import { initializeGamificationModule, getVidas, getPistasDesbloqueadas, resetChallengeState, decrementVida, incrementFallo, unlockPista, cargarDatosGamificacion, abrirModalGamificacion, cerrarModalGamificacion, cambiarTabGamificacion, comprarArticulo, equiparArticulo, reclamarMonedas, ganarVolts, comprarEnergia, comprarPista, renderPistas, playCoinSound, playErrorSound, getMensajesExito, getMensajesFallo, initAudio } from './gamification.js'; // New import for gamification module
 import { initializeTeacherModule, iniciarAppDocente as teacherModuleIniciarAppDocente, renderTeacherDashboard, exportarCSV, cambiarTabDocente, renderTeacherManagementUI, addDocente, removeDocente, renderSecondaryTeacherUI, addMyGroup, removeMyGroup } from './teacher.js'; // New import for teacher module
 
 // ==============================================================
@@ -100,6 +100,40 @@ let timers = {}; let intervalos = {};
 // Inicializar los módulos una sola vez, pasando las dependencias que no cambian.
 // Ahora los módulos obtendrán el estado dinámico (currentUser, etc.) desde state.js.
 initializeTeacherModule(db, window.lucide.createIcons);
+
+// EXPOSICIÓN GLOBAL PARA EVENTOS INLINE EN HTML
+window.cerrarModalGamificacion = cerrarModalGamificacion;
+window.verifyCode = verifyCode;
+window.llevarAlSimulador = llevarAlSimulador;
+window.comprarArticulo = comprarArticulo;
+window.equiparArticulo = equiparArticulo;
+window.comprarPista = comprarPista;
+window.comprarEnergia = comprarEnergia;
+window.reclamarMonedas = reclamarMonedas;
+window.abrirModalTeoria = abrirModalTeoria;
+window.validarQuiz = validarQuiz;
+window.cambiarTabGamificacion = cambiarTabGamificacion;
+window.iniciarAppDocente = teacherModuleIniciarAppDocente;
+window.loadWeek = loadWeek;
+
+function setupVirtualKeyboard(nivel) {
+    const kbd = document.getElementById(`kbd-${nivel}`);
+    if (!kbd) return;
+    kbd.innerHTML = '';
+    ARDUINO_QUICK_COMMANDS.forEach(cmd => {
+        const btn = document.createElement('button');
+        btn.className = 'tag';
+        btn.style.cursor = 'pointer';
+        btn.textContent = cmd;
+        btn.onclick = () => {
+            const editor = codeEditors[nivel];
+            const doc = editor.getDoc();
+            doc.replaceRange(cmd, doc.getCursor());
+            editor.focus();
+        };
+        kbd.appendChild(btn);
+    });
+}
 
 /**
  * Muestra una notificación visual elegante (Toast).
@@ -167,6 +201,7 @@ setupAuthListener(auth, db, {
   showLoginError: (msg) => {
     document.getElementById('login-error').style.display = 'block';
     document.getElementById('login-error').textContent = msg;
+    showToast(msg, 'error');
   },
   hideLoginError: () => {
     document.getElementById('login-error').style.display = 'none';
@@ -187,6 +222,7 @@ async function loginConGoogle() {
     document.getElementById('login-error').style.display = 'block';
     document.getElementById('login-error').textContent = result.error;
     document.getElementById('login-loading').style.display = 'none'; // Hide loading on error
+    showToast(result.error, 'error');
   }
   // The onAuthStateChanged listener in auth.js will handle successful login and UI updates
 }
@@ -477,7 +513,7 @@ function verifyCode(nivel) {
        btn.innerHTML = `<i data-lucide="play"></i> Verificar`; btn.disabled = false; if (window.lucide) lucide.createIcons(); return;
     }
 
-    const cleanCode = codigoLimpio.replace(/\s+/g, '');
+    let cleanCode = codigoLimpio.replace(/\s+/g, '');
     const reto = weeks[currentRetoId].retos[nivel];
     let success = true;
 
@@ -500,7 +536,7 @@ function verifyCode(nivel) {
     if (success) {
       fb.className = "feedback success"; fb.style.borderColor = ""; fb.style.backgroundColor = ""; 
       fb.innerHTML = `<div class="flex-icon"><i data-lucide="check-circle-2"></i> ${mensajesExitoLocal[Math.floor(Math.random()*mensajesExitoLocal.length)]}</div>`;
-      window.confetti(); stopTimer(nivel);
+      if (window.confetti) window.confetti(); stopTimer(nivel);
 
       userData.savedCodes[`code_${currentRetoId}_${nivel}`] = originalCode;
       
@@ -982,6 +1018,9 @@ function setupEventListeners() {
                 break;
             case 'enviarFeedback':
                 import('./teacher.js').then(m => m.enviarFeedback(target.dataset.uid, target.dataset.nombre));
+                break;
+            case 'toggleWeek':
+                import('./teacher.js').then(m => m.toggleWeekForClass(target.dataset.grupo, target.dataset.week, target.checked));
                 break;
             case 'cerrarModal':
                 target.closest('.modal-overlay').remove();

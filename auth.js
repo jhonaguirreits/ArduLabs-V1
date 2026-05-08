@@ -28,9 +28,12 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            const isDomainValid = user.email.endsWith('@itspereira.edu.co');
+            const userEmail = user.email.toLowerCase();
+            const isDomainValid = userEmail.endsWith('@itspereira.edu.co');
+            
             if (!isDomainValid) {
                 showLoginError('Acceso denegado. Usa tu cuenta institucional (@itspereira.edu.co)');
+                hideLoginLoading();
                 await signOut(auth);
                 return;
             }
@@ -40,20 +43,21 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
             updateState({ currentUser: user });
 
             try {
-                const isAdmin = user.email === ADMIN_EMAIL;
+                const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase();
                 const rolesDoc = await getDoc(doc(db, "config", "roles"));
-                const isSecondaryTeacher = rolesDoc.exists() && rolesDoc.data().docentes?.includes(user.email);
+                const isSecondaryTeacher = rolesDoc.exists() && rolesDoc.data().docentes?.some(e => e.toLowerCase() === userEmail);
                 
                 let detectedGrado = null;
 
                 // VALIDACIÓN DE MATRÍCULA PARA ESTUDIANTES
                 if (!isAdmin && !isSecondaryTeacher) {
                     const classesRef = collection(db, "classes");
-                    const q = query(classesRef, where("allowedEmails", "array-contains", user.email));
+                    const q = query(classesRef, where("allowedEmails", "array-contains", userEmail));
                     const classSnap = await getDocs(q);
                     
                     if (classSnap.empty) {
                         showLoginError('Tu correo no está matriculado en ninguna clase. Contacta a tu docente.');
+                        hideLoginLoading();
                         await signOut(auth);
                         return;
                     }
@@ -76,13 +80,14 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
                     // Verificar si el usuario está bloqueado
                     if (currentData.blocked === true) {
                         showLoginError('Tu acceso ha sido restringido por un administrador.');
+                        hideLoginLoading();
                         await signOut(auth);
                         return;
                     }
                 } else {
                     let finalGrado = isAdmin ? "ADMIN" : (isSecondaryTeacher ? "DOCENTE" : detectedGrado);
                     currentData = {
-                        nombres: user.displayName, email: user.email, grado: finalGrado,
+                        nombres: user.displayName, email: userEmail, grado: finalGrado,
                         volts: 0, monedas: 0, streak: 0, lastLogin: new Date().toISOString(),
                         progress: {}, records: {}, savedCodes: {}, drafts: {}, teoria: {},
                         avatar: "user", theme: "blue", themeMode: "dark", inventory: { avatars: ["user"], themes: ["blue"] },
@@ -92,7 +97,8 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
                         language: "es",
                         nivelDificultad: "estandar",
                         piarProfile: "ninguno",
-                        teacherFeedback: null
+                        teacherFeedback: null,
+                        items: { shield: 0 }
                     };
                     await saveToFirebase(user.uid, currentData);
                 }
@@ -101,7 +107,9 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
                 currentData.savedCodes = currentData.savedCodes || {};
                 currentData.drafts = currentData.drafts || {};
                 currentData.teoria = currentData.teoria || {};
+                currentData.progress = currentData.progress || {};
                 currentData.inventory = currentData.inventory || { avatars: ["user"], themes: ["blue"] };
+                currentData.items = currentData.items || { shield: 0 };
                 currentData.collectiveRewardClaimed = currentData.collectiveRewardClaimed || false;
                 currentData.blocked = currentData.blocked || false;
                 currentData.language = currentData.language || "es";
@@ -122,6 +130,7 @@ export const setupAuthListener = (auth, db, appCallbacks) => {
             } catch (error) {
                 console.error("Error al cargar perfil:", error);
                 showLoginError('Error al cargar datos de usuario.');
+                hideLoginLoading();
             }
         } else {
             resetState();
@@ -144,7 +153,7 @@ export const loginWithGoogle = async (auth) => {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
 
-        if (!user.email.endsWith('@itspereira.edu.co')) {
+        if (!user.email.toLowerCase().endsWith('@itspereira.edu.co')) {
             await signOut(auth);
             return { success: false, error: 'Acceso denegado. Usa tu cuenta @itspereira.edu.co' };
         }

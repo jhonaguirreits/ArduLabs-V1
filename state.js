@@ -14,7 +14,7 @@ const state = {
         avatar: "user", theme: "blue", themeMode: "dark", inventory: { avatars: ["user"], themes: ["blue"] },
         achievements: [],
         collectiveRewardClaimed: false,
-        items: { shields: 0 },
+        items: { shield: 0 },
         language: "es",           // es, en
         nivelDificultad: "estandar", // estandar, profundizacion, piar
         piarProfile: "ninguno",     // ninguno, cognitivo, visual, motriz
@@ -23,7 +23,7 @@ const state = {
     },
     esAdmin: false,
     esDocenteSecundario: false,
-    currentRetoId: '1',
+    currentRetoId: 'P1-W1',
     currentPeriod: 1,
     collectiveProgress: 0,
 };
@@ -62,7 +62,7 @@ export function resetState() {
             avatar: "user", theme: "blue", themeMode: "dark", inventory: { avatars: ["user"], themes: ["blue"] },
             achievements: [],
             collectiveRewardClaimed: false,
-            items: { shields: 0 }
+            items: { shield: 0 }
         },
         esAdmin: false,
         esDocenteSecundario: false,

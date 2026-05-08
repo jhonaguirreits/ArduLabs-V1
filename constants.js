@@ -7,6 +7,11 @@ export const mensajesFallo = ["No te desanimes.", "Revisa con calma.", "¡Intent
 
 export const COLLECTIVE_CHALLENGE_GOAL = 500; // Meta de retos superados por toda la escuela
 
+export const translations = {
+  es: { welcome: "Bienvenido", retry: "Reintentar" },
+  en: { welcome: "Welcome", retry: "Retry" }
+};
+
 export const JERARQUIA_GRADOS = {
   "6-7": { nivel: "Explorador", descripcion: "Introducción lúdica y bloques básicos." },
   "8-9": { nivel: "Constructor", descripcion: "Lógica algorítmica y sensores estándar." },

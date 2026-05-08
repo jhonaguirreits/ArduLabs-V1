@@ -384,7 +384,7 @@ export const reclamarMonedas = (semanaId, nivel, cantidad) => {
     btn.innerText = '✔️ Recompensa Reclamada';
     btn.onclick = null;
     playCoinSound();
-    confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
+    if (window.confetti) window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
 };
 
 export const ganarVolts = (cantidad) => {
@@ -422,7 +422,8 @@ export const comprarEnergia = (nivel) => {
 export const comprarPista = (nivel) => {
     const { userData, currentRetoId } = getState();
     const newUserData = { ...userData };
-    const reto = weeks[currentRetoId]?.retos[nivel];
+    const currentReto = weeks[currentRetoId];
+    const reto = currentReto?.retos?.[nivel];
     if (!reto) return;
     if (_pistasDesbloqueadas[nivel] >= reto.pistas.length) return;
     if (newUserData.volts >= 5) {
